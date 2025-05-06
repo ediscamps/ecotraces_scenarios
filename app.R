@@ -221,10 +221,10 @@ server <- function(input, output) {
 
 
 output$dt <- DT::renderDataTable(
-  df_mes(), #%>%
-    # dplyr::group_by(statut) %>%
-    # dplyr::summarise(total = sum(as.numeric(total)/1000)) %>%
-    # dplyr::mutate(across(where(is.numeric), \(x) round(x, 0))),
+  df_mes() %>%
+    dplyr::group_by(statut) %>%
+    dplyr::summarise(total = sum(as.numeric(total)/1000)) %>%
+    dplyr::mutate(across(where(is.numeric), \(x) round(x, 0))),
   rownames = FALSE,
   # extensions = c("Buttons", "Scroller"),
   # options = list(
@@ -312,26 +312,87 @@ output$dt <- DT::renderDataTable(
   #                                       round(100 - sum(df_destination()$total) / 366 * 100, 1), "%")})
   # 
   
+  df_plane_km_pour_plot <- reactive({
+    
+    df_mes_modal <- df_missions %>% 
+      dplyr::filter(!(mode == "plane" & distance_km < (input$distance_plane*2))) %>%
+      dplyr::filter(!(mode == "plane" & destination %in% input$avion)) %>%
+      dplyr::group_by(mode) %>%
+      dplyr::summarise(total = sum(as.numeric(CO2eq_kg))/1000) %>%
+      dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))) %>%
+      dplyr::mutate(mesures = "après")
+    
+    df_sans_mes_modal <- df_missions %>%
+      dplyr::group_by(mode) %>%
+      dplyr::summarise(total = sum(as.numeric(CO2eq_kg))/1000) %>%
+      dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))) %>%
+      dplyr::mutate(mesures = "avant")
+    
+    df_compare <- rbind(df_mes_modal, df_sans_mes_modal)
+    
+    return(df_compare)
+        
+      })
+  
+  # output$detail_transport <- renderPlot(
+  #   
+  #   ggplot(df_missions %>%
+  #            dplyr::group_by(mode) %>%
+  #            dplyr::summarise(total = sum(as.numeric(CO2eq_kg))/1000) %>%
+  #            dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))),
+  #          aes(x = mode, y = total)) + geom_col() +
+  #     labs(x = "Destination", y = "Emission en tonne de CO2")
+  # 
+  # )
+  
   output$detail_transport <- renderPlot(
     
-    ggplot(df_missions %>%
-             dplyr::group_by(mode) %>%
-             dplyr::summarise(total = sum(as.numeric(CO2eq_kg))/1000) %>%
-             dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))), 
-           aes(x = mode, y = total)) + geom_col() +
-      labs(x = "Destination", y = "Emission en tonne de CO2")
+  ggplot(df_plane_km_pour_plot(), aes(x=mode, y=total, fill= mesures)) +
+    geom_col(position = position_dodge()) +
+    scale_fill_manual(values = c("grey", "black")) +
+    labs(x = "Moyen de transport", y = "Emission en tonne de CO2") 
     
   )
   
+  
+  df_plane_km_pour_plot_2 <- reactive({
+    
+    df_mes_modal <- df_missions %>% 
+      dplyr::filter(!(mode == "plane" & distance_km < (input$distance_plane*2))) %>%
+      dplyr::filter(!(mode == "plane" & destination %in% input$avion)) %>%
+      dplyr::group_by(destination) %>%
+      dplyr::summarise(total = sum(as.numeric(CO2eq_kg))/1000) %>%
+      dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))) %>%
+      dplyr::mutate(mesures = "après")
+    
+    df_sans_mes_modal <- df_missions %>%
+      dplyr::group_by(destination) %>%
+      dplyr::summarise(total = sum(as.numeric(CO2eq_kg))/1000) %>%
+      dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))) %>%
+      dplyr::mutate(mesures = "avant")
+    
+    df_compare <- rbind(df_mes_modal, df_sans_mes_modal)
+    
+    return(df_compare)
+    
+  })
+  
+  
+  
+  
   output$detail_destination <- renderPlot(
     
-    ggplot(df_missions %>%
-             dplyr::group_by(destination) %>%
-             dplyr::summarise(total = sum(as.numeric(CO2eq_kg))/1000) %>%
-             dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))), 
-           aes(x = destination, y = total)) + geom_col() +
-      labs(x = "Destination", y = "Emission en tonne de CO2")
+    # ggplot(df_missions %>%
+    #          dplyr::group_by(destination) %>%
+    #          dplyr::summarise(total = sum(as.numeric(CO2eq_kg))/1000) %>%
+    #          dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))), 
+    #        aes(x = destination, y = total)) + geom_col() +
+    #   labs(x = "Destination", y = "Emission en tonne de CO2")
     
+    ggplot(df_plane_km_pour_plot_2(), aes(x = destination, y = total, fill = mesures)) +
+      geom_col(position=position_dodge()) +
+      scale_fill_manual(values = c("grey", "black")) +
+      labs(x = "Moyen de transport", y = "Emission en tonne de CO2")
   )
   
   
