@@ -67,6 +67,7 @@ ui <- navbarPage(
                  "A l'échelle du labo, le BGES sur 3 ans est de 437,8 t eCO2.",
                  textOutput("text_report_bges_reduit"), 
                  textOutput("text_report_p_reduc"),
+                 textOutput("text_report_n_missions"),
 
                  tags$br(),
                  plotOutput("detail_transport"),
@@ -127,7 +128,6 @@ ui <- navbarPage(
                  "A l'échelle du labo, le BGES sur 3 ans est de 437,8 t eCO2.",
                  textOutput("text_quota_bges_reduit"), 
                  textOutput("text_quota_p_reduc"),
-                 "Le nombre d'agent impacté par vos mesures est de ", 
                  textOutput("text_quota_n_agent"),
                  
                 
@@ -246,17 +246,10 @@ output$dt <- DT::renderDataTable(
     1 - sum(df_mes()$total) / sum(df_agent$total)
   })
   
-  # output$text_quota_p <- renderText({paste0("A l'échelle du labo, le bilan carbone sur 3 ans est de 437,8 tonnnes. Grâce à vos mesures, il est désormais de ", 
-  #                                   round(bges_reduit()/1000, 1), " tonnes de CO2",
-  #                                   " et le pourcentage de réduction est de ", 
-  #                                   round(pourcentage_reduction() * 100, 1), 
-  #                                   "%. Le nombre d'agent impacté par vos mesures est de ", 
-  #                                   length(which(c(df_mes()$total == df_agent$total) == FALSE)), ".")})
-
-  
     output$text_quota_bges_reduit <- renderText(paste0("BGES réduit : ", round(bges_reduit()/1000, 1)," t eCO2"))
     output$text_quota_p_reduc <- renderText(paste0("Pourcentage de réduction : ", round(pourcentage_reduction() * 100, 1)," %"))
-    # output$text_quota_n_agent <- renderText(length(which(c(df_mes()$total == df_agent$total) == FALSE)), "."))
+    output$text_quota_n_agent <- renderText(paste("Nombre d'agents impactés par vos mesures :",
+      length(which(round(df_mes()$total,1) < round(df_agent$total,1))), "."))
 
   
   # length(which(c(df_agent$total == df_mes()$total) == TRUE))
@@ -345,6 +338,9 @@ output$dt <- DT::renderDataTable(
   output$text_report_bges_reduit <- renderText(paste0("BGES réduit : ",round(bges_reduit_plane_km()/1000, 1)," t eCO2"))
 
   output$text_report_p_reduc <- renderText(paste0("Pourcentage de réduction : ",round(pourcentage_reduction_plane_km() * 100, 1)," %"))
+  
+  output$text_report_n_missions <- renderText(paste("Nombre de missions impactées par vos mesures :",
+                                                nrow(df_missions)-nrow(df_plane_km())))
   
   
   #   df_destination <- reactive({
