@@ -11,7 +11,7 @@ library(shinythemes)
 #   dplyr::filter(!is.na(Agent))
 
 df_agent <- read.csv("df_agent.csv", sep = ";", dec = ",")
-df_missions <- read.csv("df_missions.csv", sep = ";", dec = ",")
+df_missions <- read.csv("df_missions.csv", sep = ";", dec = ".")
 
 
 # df_imported <- read.csv2("C:/Users/Surface User/Desktop/ecoTRACEQ/data BGES pour app.csv") %>%
@@ -35,85 +35,39 @@ ui <- navbarPage(
     # Application title
     strong("ecoTRACES"),
 
-    # Sidebar with a slider input for number of bins
-    tabPanel("Mise en place de quotas",
-    sidebarLayout(
-        sidebarPanel(
-          h5(strong("Appliquez vos mesures de rédution")),
-          h5("Toutes les mesures proposées ci-dessous sont des quotas calculés en tonne de CO2."),
-          tags$br(),
-          tags$style(".my-class {font-size: 75%; line-height: 1.6;}"),
-            sliderInput("mes1",
-                        "quota permanents, colloques",
-                        min = 0,
-                        max = 10,
-                        value = 10,
-                        step = 0.5),
-          sliderInput("mes2",
-                      "quota externes, colloques",
-                      min = 0,
-                      max = 10,
-                      value = 10,
-                      step = 0.5),
-            sliderInput("mes3",
-                        "quota tous personnels, colloques",
-                        min = 0,
-                        max = 10,
-                        value = 10,
-                        step = 0.5),
-            sliderInput("mes4",
-                        "quota permanents, tous motifs",
-                        min = 0,
-                        max = 30,
-                        value = 30,
-                        step = 0.5),
-          sliderInput("mes5",
-                      "quota externes, tous motifs",
-                      min = 0,
-                      max = 30,
-                      value = 30,
-                      step = 0.5),
-            sliderInput("mes6",
-                        "quota tous personnels, tous motifs",
-                        min = 0,
-                        max = 30,
-                        value = 30)
-        ),
-
-        # Show a plot of the generated distribution
-        mainPanel(
-          h5(strong("Bilan après mise en place des mesures :")),
-          textOutput("text"),
-          tags$br(),
-          h5(strong("Impact de la réduction selon le statut de l'agent :")),
-          tags$br(),
-          DT::dataTableOutput("dt"),
-          tags$br(),
-          h5(strong("A l'échelle de l'agent :")),
-          plotOutput("diff_avant_apres"),
-          tags$br()
-          )
-      )
-    ),
-    tabPanel("Agir sur les missions",
+    tabPanel("Report modal",
              sidebarLayout(
                sidebarPanel(
-                 h5(strong("Appliquez vos mesures de rédution")),
+                 h5(strong("Appliquez vos mesures de réduction")),
                  tags$br(),
-                 checkboxGroupInput("avion", strong("Destination autorisée en avion"),
+                 sliderInput("distance_plane",
+                             strong("Distance (km) en dessous de laquelle l'avion est interdit"),
+                             min = 0,
+                             max = 30000,
+                             value = 0,
+                             step = 100),
+                 h6("Vous pouvez utiliser les flèches du clavier pour ajuster plus précisément"),
+                 tags$br(),
+
+                 checkboxGroupInput("avion", strong("Destinations non autorisées en avion"),
                                     choices = c(unique(df_missions$destination)),
-                                    selected = c(unique(df_missions$destination)),
-                                    inline = TRUE
+                                    selected = NULL,
+                                    inline = F
                  ),
                  tags$br(),
-                 sliderInput("distance_car",
-                             strong("Distance autorisée en voiture"),
-                             min = 0,
-                             max = 5000,
-                             value = 5000)
+                 # sliderInput("distance_car",
+                 #             strong("Distance autorisée en voiture"),
+                 #             min = 0,
+                 #             max = 5000,
+                 #             value = 5000)
                ),
                mainPanel(
-                 textOutput("text_dest"),
+                 # textOutput("text_dest"),
+                 h5(strong("Bilan après mise en place des mesures :")),
+                 "A l'échelle du labo, le BGES sur 3 ans est de 437,8 t eCO2.",
+                 textOutput("text_report_bges_reduit"), 
+                 textOutput("text_report_p_reduc"),
+
                  tags$br(),
                  plotOutput("detail_transport"),
                  tags$br(),
@@ -122,7 +76,75 @@ ui <- navbarPage(
                  # DT::dataTableOutput("transport")
                )
              )
+    ),
+    tabPanel("Quotas",
+             sidebarLayout(
+               sidebarPanel(
+                 h5(strong("Appliquez vos mesures de rédution")),
+                 h5("Toutes les mesures proposées ci-dessous sont des quotas calculés en tonne de CO2."),
+                 tags$br(),
+                 tags$style(".my-class {font-size: 75%; line-height: 1.6;}"),
+                 sliderInput("mes1",
+                             "quota permanents, colloques",
+                             min = 0,
+                             max = 10,
+                             value = 10,
+                             step = 0.5),
+                 sliderInput("mes2",
+                             "quota externes, colloques",
+                             min = 0,
+                             max = 10,
+                             value = 10,
+                             step = 0.5),
+                 sliderInput("mes3",
+                             "quota tous personnels, colloques",
+                             min = 0,
+                             max = 10,
+                             value = 10,
+                             step = 0.5),
+                 sliderInput("mes4",
+                             "quota permanents, tous motifs",
+                             min = 0,
+                             max = 30,
+                             value = 30,
+                             step = 0.5),
+                 sliderInput("mes5",
+                             "quota externes, tous motifs",
+                             min = 0,
+                             max = 30,
+                             value = 30,
+                             step = 0.5),
+                 sliderInput("mes6",
+                             "quota tous personnels, tous motifs",
+                             min = 0,
+                             max = 30,
+                             value = 30)
+               ),
+               
+               # Show a plot of the generated distribution
+               mainPanel(
+                 h5(strong("Bilan après mise en place des mesures :")),
+                 "A l'échelle du labo, le BGES sur 3 ans est de 437,8 t eCO2.",
+                 textOutput("text_quota_bges_reduit"), 
+                 textOutput("text_quota_p_reduc"),
+                 "Le nombre d'agent impacté par vos mesures est de ", 
+                 textOutput("text_quota_n_agent"),
+                 
+                
+                 
+                 
+                 tags$br(),
+                 h5(strong("Impact de la réduction selon le statut de l'agent :")),
+                 tags$br(),
+                 DT::dataTableOutput("dt"),
+                 tags$br(),
+                 h5(strong("A l'échelle de l'agent :")),
+                 plotOutput("diff_avant_apres"),
+                 tags$br()
+               )
+             )
     )
+    
 )
 
 ### SERVER ###
@@ -223,12 +245,18 @@ output$dt <- DT::renderDataTable(
     1 - sum(df_mes()$total) / sum(df_agent$total)
   })
   
-  output$text <- renderText({paste0("A l'échelle du labo, le bilan carbone sur 3 ans est de 437,8 tonnnes. Grâce à vos mesures, il est désormais de ", 
-                                    round(bges_reduit()/1000, 1), " tonnes de CO2",
-                                    " et le pourcentage de réduction est de ", 
-                                    round(pourcentage_reduction() * 100, 1), 
-                                    ". Le nombre d'agent impacté par vos mesures est de ", 
-                                    length(which(c(df_mes()$total == df_agent$total) == FALSE)), ".")})
+  # output$text_quota_p <- renderText({paste0("A l'échelle du labo, le bilan carbone sur 3 ans est de 437,8 tonnnes. Grâce à vos mesures, il est désormais de ", 
+  #                                   round(bges_reduit()/1000, 1), " tonnes de CO2",
+  #                                   " et le pourcentage de réduction est de ", 
+  #                                   round(pourcentage_reduction() * 100, 1), 
+  #                                   "%. Le nombre d'agent impacté par vos mesures est de ", 
+  #                                   length(which(c(df_mes()$total == df_agent$total) == FALSE)), ".")})
+
+  
+    output$text_quota_bges_reduit <- renderText(paste0("BGES réduit : ", round(bges_reduit()/1000, 1)," t eCO2"))
+    output$text_quota_p_reduc <- renderText(paste0("Pourcentage de réduction : ", round(pourcentage_reduction() * 100, 1)," %"))
+    # output$text_quota_n_agent <- renderText(length(which(c(df_mes()$total == df_agent$total) == FALSE)), "."))
+
   
   # length(which(c(df_agent$total == df_mes()$total) == TRUE))
 
@@ -247,22 +275,42 @@ output$dt <- DT::renderDataTable(
     
   )
   
-  ####################################### next panel #######################################
+  ####################################### panel report modal #######################################
   
-  # PB ici je prends toutes les missions et non pas seulement celles faites en avion !
-  df_destination <- reactive({
-    df_missions %>%
-      dplyr::filter(mode == "plane") %>%
-      dplyr::filter(destination %in% input$avion) %>%
-      dplyr::group_by(destination) %>%
-      dplyr::summarise(total = sum(as.numeric(CO2eq_kg))/1000) %>%
-      dplyr::mutate(across(where(is.numeric), \(x) round(x, 2)))
+  df_plane_km <- reactive({
+    df_missions %>% 
+      dplyr::filter(!(mode == "plane" & distance_km < (input$distance_plane*2))) %>%
+      dplyr::filter(!(mode == "plane" & destination %in% input$avion))
+    
+    # je multiplie par 2 puisque l'objectif est d'exprimer une distance aller, mais la distance tot compte l'AR
   })
   
+  bges_reduit_plane_km <- reactive({
+    sum(df_plane_km()$CO2eq_kg)
+  })
   
-  output$text_dest <- renderText({paste("Grâce à vos mesures, la réduction des émissions de CO2 est de", 
-                                        round(100 - sum(df_destination()$total) / 366 * 100, 1), "%")})
+  pourcentage_reduction_plane_km <- reactive({
+    1 - bges_reduit_plane_km() / sum(df_agent$total)
+  })
   
+  output$text_report_bges_reduit <- renderText(paste0("BGES réduit : ",round(bges_reduit_plane_km()/1000, 1)," t eCO2"))
+
+  output$text_report_p_reduc <- renderText(paste0("Pourcentage de réduction : ",round(pourcentage_reduction_plane_km() * 100, 1)," %"))
+  
+  
+  #   df_destination <- reactive({
+  #   df_missions %>%
+  #     dplyr::filter(mode == "plane") %>%
+  #     dplyr::filter(destination %in% input$avion) %>%
+  #     dplyr::group_by(destination) %>%
+  #     dplyr::summarise(total = sum(as.numeric(CO2eq_kg))/1000) %>%
+  #     dplyr::mutate(across(where(is.numeric), \(x) round(x, 2)))
+  # })
+  
+  
+  # output$text_dest <- renderText({paste("Grâce à vos mesures, la réduction des émissions de CO2 est de", 
+  #                                       round(100 - sum(df_destination()$total) / 366 * 100, 1), "%")})
+  # 
   
   output$detail_transport <- renderPlot(
     
