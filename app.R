@@ -131,7 +131,8 @@ ui <- navbarPage(
                  textOutput("text_quota_n_agent"),
                  
                 
-                 
+                 tags$br(),
+                 plotOutput("histo_quota"),
                  
                  tags$br(),
                  h5(strong("Impact de la réduction selon le statut de l'agent :")),
@@ -265,6 +266,54 @@ output$dt <- DT::renderDataTable(
       dplyr::mutate(across(where(is.numeric), \(x) round(x, 1)))
     
   })
+  
+  
+  ##### graph histo pour quota
+  
+  df_quota_pour_plot <- reactive({
+    
+    df_mes_quota <- df_mes() %>%
+      dplyr::group_by(statut) %>%
+      dplyr::summarise(total = sum(as.numeric(total))/1000) %>%
+      dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))) %>%
+      dplyr::mutate(mesures = "après")
+    
+    df_sans_mes_quota <- df_agent %>%
+      dplyr::group_by(statut) %>%
+      dplyr::summarise(total = sum(as.numeric(total))/1000) %>%
+      dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))) %>%
+      dplyr::mutate(mesures = "avant")
+    
+    df_compare <- rbind(df_mes_quota, df_sans_mes_quota)
+    
+    return(df_compare)
+    
+  })
+  
+  
+  output$histo_quota <- renderPlot(
+    
+    ggplot(df_quota_pour_plot(), aes(x=statut, y=total, fill= mesures)) +
+      geom_col(position = position_dodge()) +
+      scale_fill_manual(values = c("grey", "black")) +
+      labs(x = "Statut des agents", y = "Emission en tonne de CO2") 
+    
+  )
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   ############### !!! corriger nombre ci-dessous ! #######################
   output$diff_avant_apres <- renderPlot(
