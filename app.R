@@ -197,11 +197,12 @@ server <- function(input, output) {
     
   })
 
+
 output$dt <- DT::renderDataTable(
-  df_mes() %>%
-    dplyr::group_by(statut) %>%
-    dplyr::summarise(total = sum(as.numeric(total)/1000)) %>%
-    dplyr::mutate(across(where(is.numeric), \(x) round(x, 0))),
+  df_mes(), #%>%
+    # dplyr::group_by(statut) %>%
+    # dplyr::summarise(total = sum(as.numeric(total)/1000)) %>%
+    # dplyr::mutate(across(where(is.numeric), \(x) round(x, 0))),
   rownames = FALSE,
   # extensions = c("Buttons", "Scroller"),
   # options = list(
@@ -222,9 +223,14 @@ output$dt <- DT::renderDataTable(
     1 - sum(df_mes()$total) / sum(df_agent$total)
   })
   
-  output$text <- renderText({paste("A l'échelle du labo, le bilan carbone sur 3 ans est de 437,8 tonnnes. Grâce à vos mesures, il est désormais de", round(bges_reduit()/1000, 1), "tonnes de CO2",
-                                   "et le pourcentage de réduction est de", round(pourcentage_reduction() * 100, 1))})
+  output$text <- renderText({paste0("A l'échelle du labo, le bilan carbone sur 3 ans est de 437,8 tonnnes. Grâce à vos mesures, il est désormais de ", 
+                                    round(bges_reduit()/1000, 1), " tonnes de CO2",
+                                    " et le pourcentage de réduction est de ", 
+                                    round(pourcentage_reduction() * 100, 1), 
+                                    ". Le nombre d'agent impacté par vos mesures est de ", 
+                                    length(which(c(df_mes()$total == df_agent$total) == FALSE)), ".")})
   
+  # length(which(c(df_agent$total == df_mes()$total) == TRUE))
 
   data_plot <- reactive({
     data.frame(Agent_moyen = c("avant", "après"), CO2 = c(sum(df_agent$total), sum(df_mes()$total))) %>%
