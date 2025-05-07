@@ -5,36 +5,13 @@ library(readr)
 library(ggplot2)
 library(shinythemes)
 
-# df_agent <- read.csv("df_agent.csv", 
-#                                  delim = ";", escape_double = FALSE, col_types = cols(CO2_raw = col_number()), 
-#                                  trim_ws = TRUE) %>%
-#   dplyr::filter(!is.na(Agent))
-
 df_agent <- read.csv("df_agent.csv", sep = ";", dec = ",")
 df_missions <- read.csv("df_missions.csv", sep = ";", dec = ".")
-
-
-# df_imported <- read.csv2("C:/Users/Surface User/Desktop/ecoTRACEQ/data BGES pour app.csv") %>%
-#   dplyr::filter(!is.na(Agent))
-
-# quota tous tous motifs
-# quota tous colloques
-# 
-# quota perm tous motifs
-# quota perm colloques
-# 
-# supprimer avion avec checkbox ou tu selectionnes : France, Europe, Asie, Ameriques...
-# supprimer avion en fonction de distance : slider
-
-
 
 ### UI ###
 ui <- navbarPage(
     theme = shinytheme("yeti"),
-
-    # Application title
     strong("ecoTRACES"),
-
     tabPanel("Report modal",
              sidebarLayout(
                sidebarPanel(
@@ -43,7 +20,7 @@ ui <- navbarPage(
                  sliderInput("distance_plane",
                              strong("Distance (km) en dessous de laquelle l'avion est interdit"),
                              min = 0,
-                             max = 30000,
+                             max = 24000,
                              value = 0,
                              step = 100),
                  h6("Vous pouvez utiliser les flèches du clavier pour ajuster plus précisément"),
@@ -129,23 +106,42 @@ ui <- navbarPage(
                  textOutput("text_quota_bges_reduit"), 
                  textOutput("text_quota_p_reduc"),
                  textOutput("text_quota_n_agent"),
-                 
-                
                  tags$br(),
-                 plotOutput("histo_quota"),
-                 
                  tags$br(),
                  h5(strong("Impact de la réduction selon le statut de l'agent :")),
                  tags$br(),
-                 DT::dataTableOutput("dt"),
+                 plotOutput("histo_quota"),
                  tags$br(),
-                 h5(strong("A l'échelle de l'agent :")),
+                 # DT::dataTableOutput("dt"),
+                 tags$br(),
+                 h5(strong("Moyenne agent :")),
                  plotOutput("diff_avant_apres"),
                  tags$br()
                )
              )
+    ),
+    tabPanel(
+      "Données brutes",
+      sidebarLayout(
+        sidebarPanel(
+          h5("Retrouvez ici toutes les données brutes."),
+        ),
+        mainPanel(
+          tabsetPanel(
+            tabPanel(
+              "Emissions de CO2 par agent",
+                  tags$br(),
+                  DT::dataTableOutput("df_agent_brut")
+            ),
+            tabPanel(
+              "Emissions de CO2 par mission",
+                  tags$br(),
+                  DT::dataTableOutput("df_mission_brut")
+            )
+          )
+        )
+      )
     )
-    
 )
 
 ### SERVER ###
@@ -221,21 +217,21 @@ server <- function(input, output) {
   })
 
 
-output$dt <- DT::renderDataTable(
-  df_mes() %>%
-    dplyr::group_by(statut) %>%
-    dplyr::summarise(total = sum(as.numeric(total)/1000)) %>%
-    dplyr::mutate(across(where(is.numeric), \(x) round(x, 0))),
-  rownames = FALSE,
-  # extensions = c("Buttons", "Scroller"),
-  # options = list(
-  #   pageLength = 10,
-  #   # lengthMenu = c(5, 10, 15, 20),
-  #   # buttons = c("csv", "pdf", "copy"),
-  #   # dom = "Bfrtip",
-  #   # scrollX = 250
-  # )
-)
+# output$dt <- DT::renderDataTable(
+#   df_mes() %>%
+#     dplyr::group_by(statut) %>%
+#     dplyr::summarise(total = sum(as.numeric(total)/1000)) %>%
+#     dplyr::mutate(across(where(is.numeric), \(x) round(x, 0))),
+#   rownames = FALSE,
+#   # extensions = c("Buttons", "Scroller"),
+#   # options = list(
+#   #   pageLength = 10,
+#   #   # lengthMenu = c(5, 10, 15, 20),
+#   #   # buttons = c("csv", "pdf", "copy"),
+#   #   # dom = "Bfrtip",
+#   #   # scrollX = 250
+#   # )
+# )
   
   bges_reduit <- reactive({
    sum(df_mes()$total)
@@ -249,7 +245,7 @@ output$dt <- DT::renderDataTable(
     output$text_quota_bges_reduit <- renderText(paste0("BGES réduit : ", round(bges_reduit()/1000, 1)," t eCO2"))
     output$text_quota_p_reduc <- renderText(paste0("Pourcentage de réduction : ", round(pourcentage_reduction() * 100, 1)," %"))
     output$text_quota_n_agent <- renderText(paste("Nombre d'agents impactés par vos mesures :",
-      length(which(round(df_mes()$total,1) < round(df_agent$total,1))), "."))
+      length(which(round(df_mes()$total,1) < round(df_agent$total,1)))))
 
   
   # length(which(c(df_agent$total == df_mes()$total) == TRUE))
@@ -441,20 +437,60 @@ output$dt <- DT::renderDataTable(
   )
   
   
-  # output$detail_destination <- renderPlot(
-  #   
-  #   ggplot(data_plot(), aes(x = Agent_moyen, y = CO2/1000/145)) + geom_col() +
-  #     labs(x = "Agent moyen", y = "Emission en tonne de CO2")
-  #   
-  # )
   
-  # output$destination <- DT::renderDataTable(
-  #   df_destination(),
+  output$df_agent_brut <- DT::renderDataTable(
+    df_agent %>%
+      dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))),
+    rownames = FALSE,
+    extensions = c("Buttons", "Scroller"),
+    options = list(
+      pageLength = 10,
+      lengthMenu = c(5, 10, 15, 20),
+      buttons = c("csv", "pdf", "copy"),
+      dom = "Bfrtip",
+      scrollX = 250
+    )
+  )
+  
+  output$df_mission_brut <- DT::renderDataTable(
+    df_missions %>%
+      dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))),
+    rownames = FALSE,
+    extensions = c("Buttons", "Scroller"),
+    options = list(
+      pageLength = 10,
+      lengthMenu = c(5, 10, 15, 20),
+      buttons = c("csv", "pdf", "copy"),
+      dom = "Bfrtip",
+      scrollX = 250
+    )
+  )
+  
+  # output$df_agent_reduit <- DT::renderDataTable(
+  #   df_mes() %>%
+  #     dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))),
   #   rownames = FALSE,
   #   extensions = c("Buttons", "Scroller"),
   #   options = list(
   #     pageLength = 10,
-  #     # lengthMenu = c(5, 10, 15, 20),
+  #     lengthMenu = c(5, 10, 15, 20),
+  #     buttons = c("csv", "pdf", "copy"),
+  #     dom = "Bfrtip",
+  #     scrollX = 250
+  #   )
+  # )
+  
+  # output$df_mission_reduit <- DT::renderDataTable(
+  #   df_missions %>% 
+  #     dplyr::filter(!(mode == "plane" & distance_km < (input$distance_plane*2))) %>%
+  #     dplyr::filter(!(mode == "plane" & destination %in% input$avion)) %>%
+  #     dplyr::summarise(total = sum(as.numeric(CO2eq_kg))/1000) %>%
+  #     dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))),
+  #   rownames = FALSE,
+  #   extensions = c("Buttons", "Scroller"),
+  #   options = list(
+  #     pageLength = 10,
+  #     lengthMenu = c(5, 10, 15, 20),
   #     buttons = c("csv", "pdf", "copy"),
   #     dom = "Bfrtip",
   #     scrollX = 250
