@@ -124,7 +124,7 @@ ui <- navbarPage(
       "Données brutes",
       sidebarLayout(
         sidebarPanel(
-          h5("Retrouvez ici toutes les données brutes (avant mesures) et les projections calculées à partir de vos propositions."),
+          h5("Retrouvez ici toutes les données brutes."),
         ),
         mainPanel(
           tabsetPanel(
