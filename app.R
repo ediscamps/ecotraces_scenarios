@@ -33,7 +33,9 @@ ui_tab1 <- fluidPage(
   br(),
   br(),
   br(),
-  em("Cette application a été conçue par Emmanuel Discamps & Marc Thomas, dans le but d'aider l'ensemble des personnels de TRACES lors des ateliers EcoTRACES visant à la conception de mesures de réduction de nos émissions.")
+  em("Cette application a été conçue par Emmanuel Discamps & Marc Thomas, dans le but d'aider l'ensemble des personnels de TRACES lors des ateliers EcoTRACES visant à la conception de mesures de réduction de nos émissions."),
+  br(),
+  em("Nous espérons bientôt ajouter de nouvelles fonctionnalités, comme une mesure de report modal avec durée de trajet en train (ex : <6h), ou des exemptions pour les quotas (ex : missions longues de 1 mois)")
 )
 
 
