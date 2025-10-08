@@ -79,44 +79,45 @@ tags$br(),
   # DT::dataTableOutput("transport")
 tags$br(),br(),
              h3(strong("2) Appliquer des mesures de quotas")),
-             h5("Toutes les mesures proposées ci-dessous sont des quotas calculés en tonne de CO2, sur 3 ans."),
+             h5("Toutes les mesures proposées ci-dessous sont des quotas calculés en tonne de CO2, par an."),
              tags$br(),
              tags$style(".my-class {font-size: 75%; line-height: 1.6;}"),
              sliderInput("mes1",
-                         "quota permanents, colloques, sur 3 ans",
+                         "quota permanents, colloques par an",
                          min = 0,
-                         max = 10,
-                         value = 10,
-                         step = 0.5),
+                         max = 5,
+                         value = 5,
+                         step = 0.25),
              sliderInput("mes2",
-                         "quota externes, colloques, sur 3 ans",
+                         "quota externes, colloques par an",
                          min = 0,
-                         max = 10,
-                         value = 10,
-                         step = 0.5),
+                         max = 5,
+                         value = 5,
+                         step = 0.25),
              sliderInput("mes3",
-                         "quota tous personnels, colloques, sur 3 ans",
+                         "quota tous personnels, colloques par an",
+                         min = 0,
+                         max = 5,
+                         value = 5,
+                         step = 0.25),
+             sliderInput("mes4",
+                         "quota permanents, tous motifs par an",
                          min = 0,
                          max = 10,
                          value = 10,
-                         step = 0.5),
-             sliderInput("mes4",
-                         "quota permanents, tous motifs, sur 3 ans",
-                         min = 0,
-                         max = 30,
-                         value = 30,
-                         step = 0.5),
+                         step = 0.25),
              sliderInput("mes5",
-                         "quota externes, tous motifs, sur 3 ans",
+                         "quota externes, tous motifs par an",
                          min = 0,
-                         max = 30,
-                         value = 30,
-                         step = 0.5),
+                         max = 10,
+                         value = 10,
+                         step = 0.25),
              sliderInput("mes6",
-                         "quota tous personnels, tous motifs, sur 3 ans",
+                         "quota tous personnels, tous motifs par an",
                          min = 0,
-                         max = 30,
-                         value = 30),
+                         max = 10,
+                         value = 10,
+                         step = 0.25),
            
            
            # Show a plot of the generated distribution
@@ -131,6 +132,24 @@ tags$br(),br(),
              # plotOutput("diff_avant_apres"),
              # tags$br()
            
+h3(strong("3) Mesures d'ajustement des quotas en fonction des personnels")),
+"Vous pouvez ajuster ici plus finement les quotas entre personnels ayant des besoins différents (par exemple, de missions sur le terrain à l'international).",
+tags$br(),br(),
+textOutput("text_p_field_international"),
+sliderInput("ajust1",
+            "ce paramètre permet de multiplier le quota des agents avec du terrain hors Europe, par rapport aux autres",
+            min = 1,
+            max = 30,
+            value = 1,
+            step = 0.25),
+textOutput("text_quota4_general"),
+textOutput("text_quota4_intern"),
+textOutput("text_quota4_nointern"),
+textOutput("text_quota6_general"),
+textOutput("text_quota6_intern"),
+textOutput("text_quota6_nointern"),
+
+
          )
 
 
@@ -379,7 +398,7 @@ server <- function(input, output) {
   df_agent_reduc <- reactive({
     
     ### mesure : quota perm, colloques
-    quota_perm_coll <- input$mes1 * 1000
+    quota_perm_coll <- input$mes1 * 3000
     
     df_agent_reduc_perm_coll <- df_agent() %>%
       dplyr::mutate(colloques = case_when(
@@ -388,7 +407,7 @@ server <- function(input, output) {
       dplyr::mutate(total = colloques + etude_terrain + autres)
     
     ### mesure : quota ext, colloques
-    quota_ext_coll <- input$mes2 * 1000
+    quota_ext_coll <- input$mes2 * 3000
     previous_df <- df_agent_reduc_perm_coll
     
     df_agent_reduc_ext_coll <- previous_df %>%
@@ -398,7 +417,7 @@ server <- function(input, output) {
       dplyr::mutate(total = colloques + etude_terrain + autres)
 
     ### mesure : quota tous, colloques
-    quota_all_coll <- input$mes3 * 1000
+    quota_all_coll <- input$mes3 * 3000
     previous_df <- df_agent_reduc_ext_coll
 
     df_agent_reduc_all_coll <- previous_df %>%
@@ -408,7 +427,7 @@ server <- function(input, output) {
       dplyr::mutate(total = colloques + etude_terrain + autres)
 
     ### mesure : quota perm, tout
-    quota_perm_all <- input$mes4 * 1000
+    quota_perm_all <- input$mes4 * 3000
     previous_df <- df_agent_reduc_all_coll
 
     df_agent_reduc_perm_all <- previous_df %>%
@@ -418,7 +437,7 @@ server <- function(input, output) {
         TRUE ~ total))
 
     ### mesure : quota ext, tout
-    quota_ext_all <- input$mes5 * 1000
+    quota_ext_all <- input$mes5 * 3000
     previous_df <- df_agent_reduc_perm_all
 
     df_agent_reduc_ext_all <- previous_df %>%
@@ -427,7 +446,7 @@ server <- function(input, output) {
         TRUE ~ total))
 
     ### mesure : quota tous, tout
-    quota_all_all <- input$mes6 * 1000
+    quota_all_all <- input$mes6 * 3000
     previous_df <- df_agent_reduc_ext_all
 
     df_agent_reduc_all_all <- previous_df %>%
@@ -559,12 +578,39 @@ server <- function(input, output) {
   )
   
   
+# adapter les quotas plus finement
+ 
   
+  pourcentage_field_international <- reactive({
+    df_missions %>%
+      dplyr::mutate(across(where(is.numeric), \(x) round(x, 2)))
+    
+    
+    df_missions_noext <-  df_missions %>%
+      select(agent, statut, motif, destination, CO2eq_kg) %>%
+      filter(motif== "etude_terrain") %>%
+      filter(statut != "externes")
+    
+    df_missions_noext_international <-  df_missions %>%
+      select(agent, statut, motif, destination, CO2eq_kg) %>%
+      filter(motif== "etude_terrain") %>%
+      filter(statut != "externes")  %>%
+      filter(destination %in% c("Afrique", "Asie", "Amériques", "Proche-Orient"))
+    
+    num_agent_international <- nrow(table(df_missions_noext_international$agent, df_missions_noext_international$destination))
+    num_agent_all <- nrow(table(df_missions_noext$agent, df_missions_noext$destination))
+    
+    num_agent_international/num_agent_all
+  })
   
+  output$text_p_field_international <- renderText(paste0("Pourcentage d'agents (hors externes) avec des missions de terrain/étude hors Europe : ", round(pourcentage_field_international() * 100, 1)," %"))
   
-  
-  
-  
+  output$text_quota4_general <- renderText(paste0("Quota permanents non ajusté (permanents, tous motifs) : ", input$mes4," t eCO2 par an"))
+  output$text_quota4_intern <- renderText(paste0("Quota permanents ajusté SANS terrain hors Europe (permanents, tous motifs) : ", input$mes4 * (1/ (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1))," t eCO2 par an"))
+  output$text_quota4_nointern <- renderText(paste0("Quota permanents ajusté AVEC terrain hors Europe (permanents, tous motifs) : ", input$mes4 * input$ajust1 / (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1)," t eCO2 par an"))
+  output$text_quota6_general <- renderText(paste0("Quota général non ajusté (tous personnels, tous motifs) : ", input$mes6," t eCO2 par an"))
+  output$text_quota6_intern <- renderText(paste0("Quota général ajusté SANS terrain hors Europe (tous personnels, tous motifs) : ", input$mes6 * (1/ (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1))," t eCO2 par an"))
+  output$text_quota6_nointern <- renderText(paste0("Quota général ajusté AVEC terrain hors Europe (tous personnels, tous motifs) : ", input$mes6 * input$ajust1 / (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1)," t eCO2 par an"))
   
   
   
