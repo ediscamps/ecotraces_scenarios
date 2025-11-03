@@ -5,7 +5,7 @@ account: ediscamps
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 14698910
-bundleId: 10330514
+bundleId: 11028426
 url: https://ediscamps.shinyapps.io/ecotraces_scenarios/
 version: 1
 asMultiple: FALSE
