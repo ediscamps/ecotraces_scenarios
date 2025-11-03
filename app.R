@@ -43,9 +43,10 @@ ui_tab2 <- fluidPage(
   
 h3(strong("1) Appliquer des mesures de report modal")),
 "Le report modal consiste à remplacer l'avion par d'autres moyens de transport (ex : train) pour certaines destinations.",
+"Ici, les vols de correspondance (par exemple un trajet Toulouse - Paris avant de prendre un vol international depuis Paris) ne sont PAS concernés.",
 tags$br(),br(),
 sliderInput("distance_plane",
-            strong("Distance (km) en dessous de laquelle l'avion est interdit"),
+            strong("Distance (km) en dessous de laquelle l'avion est interdit (hors correspondances)"),
             min = 0,
             max = 24000,
             value = 0,
@@ -53,7 +54,7 @@ sliderInput("distance_plane",
 h6("Vous pouvez utiliser les flèches du clavier pour ajuster plus précisément"),
 tags$br(),
 
-checkboxGroupInput("avion", strong("Destinations non autorisées en avion"),
+checkboxGroupInput("avion", strong("Destinations non autorisées en avion (hors correspondances)"),
                    choices = c(unique(df_missions$destination)),
                    selected = NULL,
                    inline = F
@@ -83,12 +84,12 @@ tags$br(),br(),
              tags$br(),
              tags$style(".my-class {font-size: 75%; line-height: 1.6;}"),
 
-h4("Définissez d'abord des quotas généraux (toutes les missions), pour tous les personnels (permanents, docs, post-docs) et les externes :"),
+h4("Définissez d'abord des quotas généraux pour toutes les missions (personnels = permanents, docs/post-docs, associés) :"),
 h5("Pour rappel, un vol AR en avion hors Europe consomme environ 2 t eCO2/an."),
 tags$br(),
 
 sliderInput("mes6",
-            "quota tous personnels, tous motifs, t eCO2/an",
+            "quota personnels, tous motifs, t eCO2/an",
             min = 0,
             max = 10,
             value = 10,
@@ -100,10 +101,10 @@ sliderInput("mes5",
             value = 10,
             step = 0.25),
 
-h4("Vous pouvez ensuite définir des quotas plus stricts pour les colloques :"),
+h4("Vous pouvez ensuite définir des quotas plus stricts pour les colloques (personnels = permanents, docs/post-docs, associés):"),
 tags$br(),
              sliderInput("mes3",
-                         "quota tous personnels, colloques, t eCO2/an",
+                         "quota personnels, colloques, t eCO2/an",
                          min = 0,
                          max = 5,
                          value = 5,
@@ -200,14 +201,14 @@ ui_tab3 <- fluidPage(
 ui <- dashboardPage(
   
   dashboardHeader(title = "EcoTRACES"),
-  dashboardSidebar(width = 350,
+  dashboardSidebar(width = 360,
     sidebarMenu(style = "position: fixed;",
                 menuItem("Introduction", tabName = "tab1"),
                 menuItem("Paramétrages des mesures", tabName = "tab2"),
                 menuItem("Tableaux de données", tabName = "tab3"),
 
       br(),
-      "BGES labo sur 3 ans (avant mesures) : 437,8 t eCO2",
+      textOutput("text_report_bges_original"),
       tags$br(),
       tags$br(),
       h5(strong("Bilan après mise en place des mesures sélectionnées :")),
@@ -251,6 +252,14 @@ ui <- dashboardPage(
 ### SERVER ###
 server <- function(input, output) {
 
+  ####################################### calcul du BGES original avant mesures #######################################
+  
+  bges_original <- reactive({
+    sum(df_missions$CO2eq_kg)
+  })
+  
+  output$text_report_bges_original <- renderText(paste0("BGES sur 3 ans (avant mesures) : ",round(bges_original()/1000,1)," t eCO2"))
+  
   
   ####################################### report modal #######################################
   
@@ -263,16 +272,16 @@ server <- function(input, output) {
   })
   
   # bges_reduit_plane_km <- reactive({
-  #   sum(df_missions_reduc()$CO2eq_kg)
+  #  sum(df_missions_reduc()$CO2eq_kg)
   # })
+  # # 
+  # # pourcentage_reduction_plane_km <- reactive({
+  # #   1 - bges_reduit_plane_km() / sum(df_missions$CO2eq_kg)
+  # # })
+  
+  # output$text_report_bges_reduit <- renderText(paste0("BGES réduit : ",bges_reduit_plane_km()/1000," t eCO2"))
   # 
-  # pourcentage_reduction_plane_km <- reactive({
-  #   1 - bges_reduit_plane_km() / sum(df_missions$CO2eq_kg)
-  # })
-  
-  output$text_report_bges_reduit <- renderText(paste0("BGES réduit : ",round(bges_reduit_plane_km()/1000, 1)," t eCO2"))
-  
-  output$text_report_p_reduc <- renderText(paste0("Pourcentage de réduction : ",round(pourcentage_reduction_plane_km() * 100, 1)," %"))
+  # output$text_report_p_reduc <- renderText(paste0("Pourcentage de réduction : ",round(pourcentage_reduction_plane_km() * 100, 1)," %"))
   
   output$text_report_n_missions <- renderText(paste("Nombre de missions impactées par le report modal :",
                                                     nrow(df_missions)-nrow(df_missions_reduc())))
@@ -386,7 +395,6 @@ server <- function(input, output) {
   
   ############tentative d'integrations des deux types de mesures ensembles
   
-  
   df_agent <- reactive({
     
     x <- df_missions_reduc() %>%
@@ -396,14 +404,24 @@ server <- function(input, output) {
       arrange(agent) %>%
       pivot_wider(names_from = motif, values_from = CO2eq_kg, values_fn = sum, values_fill = 0)
     
-    p_coll <- round(sum(x$colloques) / (sum(x$total)-sum(x$inconnu)),3)
-    p_etude <- round(sum(x$etude_terrain) / (sum(x$total)-sum(x$inconnu)),3)
-    p_autres <- round(sum(x$autres) / (sum(x$total)-sum(x$inconnu)),3)
+    # p_coll <- round(sum(x$colloques) / (sum(x$total)-sum(x$inconnu)),3)
+    # p_etude <- round(sum(x$etude_terrain) / (sum(x$total)-sum(x$inconnu)),3)
+    # p_autres <- round(sum(x$autres) / (sum(x$total)-sum(x$inconnu)),3)
+    p_coll <- sum(x$colloques) / (sum(x$total)-sum(x$inconnu))
+    p_etude <- sum(x$etude_terrain) / (sum(x$total)-sum(x$inconnu))
+    p_autres <- sum(x$autres) / (sum(x$total)-sum(x$inconnu))
+    
+    
+    # y <- x %>%
+    #   mutate(colloques = round(colloques + inconnu*p_coll,2)) %>%
+    #   mutate(etude_terrain = round(etude_terrain + inconnu*p_etude,2)) %>%
+    #   mutate(autres = round(autres + inconnu*p_autres,2)) %>%
+    #   select(-inconnu)
     
     y <- x %>%
-      mutate(colloques = round(colloques + inconnu*p_coll,2)) %>%
-      mutate(etude_terrain = round(etude_terrain + inconnu*p_etude,2)) %>%
-      mutate(autres = round(autres + inconnu*p_autres,2)) %>%
+      mutate(colloques = colloques + inconnu*p_coll) %>%
+      mutate(etude_terrain = etude_terrain + inconnu*p_etude) %>%
+      mutate(autres = autres + inconnu*p_autres) %>%
       select(-inconnu)
     
      return(y)
@@ -431,13 +449,13 @@ server <- function(input, output) {
         TRUE ~ colloques)) %>%
       dplyr::mutate(total = colloques + etude_terrain + autres)
 
-    ### mesure : quota tous, colloques
+    ### mesure : quota personnels, colloques
     quota_all_coll <- input$mes3 * 3000
     previous_df <- df_agent_reduc_ext_coll
 
     df_agent_reduc_all_coll <- previous_df %>%
       dplyr::mutate(colloques = case_when(
-        colloques > quota_all_coll ~ quota_all_coll,
+        statut != "externes" & colloques > quota_all_coll ~ quota_all_coll,
         TRUE ~ colloques)) %>%
       dplyr::mutate(total = colloques + etude_terrain + autres)
 
@@ -460,13 +478,13 @@ server <- function(input, output) {
         statut == "externes" & total >  quota_ext_all ~  quota_ext_all,
         TRUE ~ total))
 
-    ### mesure : quota tous, tout
+    ### mesure : quota personnels, tout
     quota_all_all <- input$mes6 * 3000
     previous_df <- df_agent_reduc_ext_all
 
     df_agent_reduc_all_all <- previous_df %>%
       dplyr::mutate(total = case_when(
-        total > quota_all_all ~ quota_all_all,
+        statut != "externes" & total > quota_all_all ~ quota_all_all,
         TRUE ~ total))
     
     df_agent_reduc_all_all
@@ -499,10 +517,9 @@ server <- function(input, output) {
     1 - sum(df_agent_reduc()$total) / sum(df_missions$CO2eq_kg)
   })
   
-    output$text_quota_bges_reduit <- renderText(paste0("BGES réduit : ", round(bges_reduit()/1000, 1)," t eCO2"))
+    output$text_quota_bges_reduit <- renderText(paste0("BGES réduit : ", round(bges_reduit()/1000,1)," t eCO2"))
     output$text_quota_p_reduc <- renderText(paste0("Pourcentage de réduction : ", round(pourcentage_reduction() * 100, 1)," %"))
-    output$text_quota_n_agent <- renderText(paste("Nombre d'agents impactés par les quotas :",
-      length(which(round(df_agent_reduc()$total,0) < round(df_agent()$total,0)))))
+    output$text_quota_n_agent <- renderText(paste("Nombre d'agents impactés par les quotas (uniquement) :", length(which(round(df_agent_reduc()$total,1) < round(df_agent()$total,1)))))
     # length(which(round(df_agent_reduc()$total,1) < round(df_agent()$total,1)))))
 
 
