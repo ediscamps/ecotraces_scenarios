@@ -312,10 +312,10 @@ server <- function(input, output) {
 
   output$detail_transport <- renderPlot(
     
-    ggplot(df_missions_reduc_pour_plot(), aes(x=mode, y=total, fill= mesures)) +
+    ggplot(df_missions_reduc_pour_plot(), aes(x=mode, y=total, fill= factor(mesures, c("avant","après")))) +
       geom_col(position = position_dodge()) +
       scale_fill_manual(values = c("grey", "black")) +
-      labs(x = "Moyen de transport", y = "Emission en tonne de CO2") 
+      labs(x = "Moyen de transport", y = "Emission en tonne de CO2", fill = "mesures") 
     
   )
   
@@ -351,10 +351,10 @@ server <- function(input, output) {
     #        aes(x = destination, y = total)) + geom_col() +
     #   labs(x = "Destination", y = "Emission en tonne de CO2")
     
-    ggplot(df_missions_reduc_pour_plot_2(), aes(x = destination, y = total, fill = mesures)) +
+    ggplot(df_missions_reduc_pour_plot_2(), aes(x = destination, y = total, fill = factor(mesures, c("avant","après")))) +
       geom_col(position=position_dodge()) +
       scale_fill_manual(values = c("grey", "black")) +
-      labs(x = "Moyen de transport", y = "Emission en tonne de CO2")
+      labs(x = "Moyen de transport", y = "Emission en tonne de CO2", fill = "mesures")
   )
   
   
@@ -555,10 +555,10 @@ server <- function(input, output) {
   
   output$histo_quota <- renderPlot(
     
-    ggplot(df_quota_pour_plot(), aes(x=statut, y=total, fill= mesures)) +
+    ggplot(df_quota_pour_plot(), aes(x=statut, y=total, fill= factor(mesures, c("avant","après")))) +
       geom_col(position = position_dodge()) +
       scale_fill_manual(values = c("grey", "black")) +
-      labs(x = "Statut des agents", y = "Emission en tonne de CO2") 
+      labs(x = "Statut des agents", y = "Emission en tonne de CO2", fill = "mesures") 
     
   )
   
