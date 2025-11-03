@@ -139,6 +139,7 @@ sliderInput("mes1",
              h5(strong("Impact de la réduction selon le statut de l'agent :")),
              tags$br(),
              plotOutput("histo_quota"),
+            # plotOutput("histo_quota_motif"),
              tags$br(),
              # # DT::dataTableOutput("dt"),
              # tags$br(),
@@ -146,7 +147,7 @@ sliderInput("mes1",
              # plotOutput("diff_avant_apres"),
              # tags$br()
            
-h3(strong("3) Mesures d'ajustement des quotas en fonction des personnels")),
+h3(strong("3) Mesures d'ajustement des quotas")),
 "Vous pouvez ajuster ici plus finement les quotas entre personnels ayant des besoins différents (par exemple, de missions sur le terrain à l'international).",
 tags$br(),br(),
 
@@ -165,9 +166,17 @@ textOutput("text_quota4_general"),
 textOutput("text_quota4_intern"),
 textOutput("text_quota4_nointern"),
 
+br(),
+h4("Vous pouvez également décider d'exclure des quotas les missions longues, en utilisant le paramètre ci-dessous."),
+sliderInput("days_slider",
+            strong("Durée minimale des missions longues (en jours) :"),
+            min = 1,
+            max = 300,
+            value = 300,
+            step = 1),
 
-         )
-
+"Au-delà de ce nombre de jours, la mission ne compte plus dans le quota par agent."
+)
 
 ui_tab3 <- fluidPage(
       h5("Retrouvez ici les données brutes."),
@@ -396,8 +405,16 @@ server <- function(input, output) {
   ############tentative d'integrations des deux types de mesures ensembles
   
   df_agent <- reactive({
+  
+  
+            # les missions longues sont ecartees ici
+    df <- df_missions_reduc() %>%
+      dplyr::mutate(motif = case_when(
+        days > input$days_slider ~  "missions_longues",
+        TRUE ~ motif))
+
     
-    x <- df_missions_reduc() %>%
+    x <- df %>%
       select(agent, statut, motif, CO2eq_kg) %>%
       group_by(agent)%>%
       mutate(total = sum(CO2eq_kg)) %>%
@@ -410,6 +427,7 @@ server <- function(input, output) {
     p_coll <- sum(x$colloques) / (sum(x$total)-sum(x$inconnu))
     p_etude <- sum(x$etude_terrain) / (sum(x$total)-sum(x$inconnu))
     p_autres <- sum(x$autres) / (sum(x$total)-sum(x$inconnu))
+    p_longues <- sum(x$missions_longues) / (sum(x$total)-sum(x$inconnu))
     
     
     # y <- x %>%
@@ -422,11 +440,12 @@ server <- function(input, output) {
       mutate(colloques = colloques + inconnu*p_coll) %>%
       mutate(etude_terrain = etude_terrain + inconnu*p_etude) %>%
       mutate(autres = autres + inconnu*p_autres) %>%
+      mutate(missions_longues = missions_longues + inconnu*p_longues) %>%
       select(-inconnu)
     
      return(y)
   })
-
+  
   
   df_agent_reduc <- reactive({
     
@@ -437,7 +456,7 @@ server <- function(input, output) {
       dplyr::mutate(colloques = case_when(
         statut == "permanents" & colloques > quota_perm_coll ~ quota_perm_coll,
         TRUE ~ colloques)) %>%
-      dplyr::mutate(total = colloques + etude_terrain + autres)
+      dplyr::mutate(total_quota = colloques + etude_terrain + autres)
     
     ### mesure : quota ext, colloques
     quota_ext_coll <- input$mes2 * 3000
@@ -447,7 +466,7 @@ server <- function(input, output) {
       dplyr::mutate(colloques = case_when(
         statut == "externes" & colloques > quota_ext_coll ~ quota_ext_coll,
         TRUE ~ colloques)) %>%
-      dplyr::mutate(total = colloques + etude_terrain + autres)
+      dplyr::mutate(total_quota = colloques + etude_terrain + autres)
 
     ### mesure : quota personnels, colloques
     quota_all_coll <- input$mes3 * 3000
@@ -457,7 +476,7 @@ server <- function(input, output) {
       dplyr::mutate(colloques = case_when(
         statut != "externes" & colloques > quota_all_coll ~ quota_all_coll,
         TRUE ~ colloques)) %>%
-      dplyr::mutate(total = colloques + etude_terrain + autres)
+      dplyr::mutate(total_quota = colloques + etude_terrain + autres)
 
     ### mesure : quota perm, tout
     quota_perm_all <- input$mes4 * 3000
@@ -465,27 +484,29 @@ server <- function(input, output) {
 
     df_agent_reduc_perm_all <- previous_df %>%
       dplyr::select(-c("colloques","autres","etude_terrain")) %>%
-      dplyr::mutate(total = case_when(
-        statut == "permanents" & total >  quota_perm_all ~  quota_perm_all,
-        TRUE ~ total))
+      dplyr::mutate(total_quota = case_when(
+        statut == "permanents" & total_quota >  quota_perm_all ~  quota_perm_all,
+        TRUE ~ total_quota))
 
     ### mesure : quota ext, tout
     quota_ext_all <- input$mes5 * 3000
     previous_df <- df_agent_reduc_perm_all
 
     df_agent_reduc_ext_all <- previous_df %>%
-      dplyr::mutate(total = case_when(
-        statut == "externes" & total >  quota_ext_all ~  quota_ext_all,
-        TRUE ~ total))
+      dplyr::mutate(total_quota = case_when(
+        statut == "externes" & total_quota >  quota_ext_all ~  quota_ext_all,
+        TRUE ~ total_quota))
 
     ### mesure : quota personnels, tout
     quota_all_all <- input$mes6 * 3000
     previous_df <- df_agent_reduc_ext_all
 
     df_agent_reduc_all_all <- previous_df %>%
-      dplyr::mutate(total = case_when(
-        statut != "externes" & total > quota_all_all ~ quota_all_all,
-        TRUE ~ total))
+      dplyr::mutate(total_quota = case_when(
+        statut != "externes" & total_quota > quota_all_all ~ quota_all_all,
+        TRUE ~ total_quota)) %>%
+    dplyr::mutate(total = total_quota + missions_longues)
+    
     
     df_agent_reduc_all_all
     
@@ -562,6 +583,38 @@ server <- function(input, output) {
     
   )
   
+  # ##### graph histo pour quota par motifs NE MARCHE PAS CAR BESOIN DE PIVOT, A FAIRE PLUS TARD
+  # 
+  # df_quota_pour_plot_motif <- reactive({
+  #   
+  #   df_mes_quota <- df_agent_reduc() %>%
+  #     dplyr::group_by(motif) %>%
+  #     dplyr::summarise(total = sum(as.numeric(total))/1000) %>%
+  #     dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))) %>%
+  #     dplyr::mutate(mesures = "après")
+  #   
+  #   df_sans_mes_quota <- df_agent() %>%
+  #     dplyr::group_by(motif) %>%
+  #     dplyr::summarise(total = sum(as.numeric(total))/1000) %>%
+  #     dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))) %>%
+  #     dplyr::mutate(mesures = "avant")
+  #   
+  #   df_compare <- rbind(df_mes_quota, df_sans_mes_quota)
+  #   
+  #   return(df_compare)
+  #   
+  # })
+  # 
+  # 
+  # output$histo_quota_motif <- renderPlot(
+  #   
+  #   ggplot(df_quota_pour_plot_motif(), aes(x=motif, y=total, fill= factor(mesures, c("avant","après")))) +
+  #     geom_col(position = position_dodge()) +
+  #     scale_fill_manual(values = c("grey", "black")) +
+  #     labs(x = "Motif des missions", y = "Emission en tonne de CO2", fill = "mesures") 
+  #   
+  # )
+  # 
   
   
   ################## out datatables
