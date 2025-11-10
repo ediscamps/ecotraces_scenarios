@@ -8,6 +8,7 @@ library(tidyr)
 library(shinydashboard)
 
 df_missions <- read.csv("df_missions.csv", sep = ";", dec = ",")
+quota_max <- 10 #quota max t par an pour définition max des sliders
 
 ### UI ###
 
@@ -81,54 +82,65 @@ ui_tab3 <- fluidPage(
   tags$br(),
   tags$style(".my-class {font-size: 75%; line-height: 1.6;}"),
   
-  h4("Définissez d'abord des quotas généraux pour toutes les missions (personnels = permanents, docs/post-docs, associés) :"),
+  h4("Définissez d'abord des quotas généraux pour toutes les missions, en fonction des statuts (personnels = permanents, docs/post-docs, associés) :"),
   h5("Pour rappel, un vol AR en avion hors Europe consomme environ 2 t eCO2/an."),
   tags$br(),
   
-  sliderInput("mes6",
+  sliderInput("mes_pers_all",
               "quota personnels, tous motifs, t eCO2/an",
               min = 0,
-              max = 10,
-              value = 10,
+              max = quota_max,
+              value = quota_max,
               step = 0.25),
-  sliderInput("mes5",
+  sliderInput("mes_ext_all",
               "quota externes, tous motifs, t eCO2/an",
               min = 0,
-              max = 10,
-              value = 10,
+              max = quota_max,
+              value = quota_max,
               step = 0.25),
+  sliderInput("mes_perm_all",
+              "quota permanents, tous motifs, t eCO2/an",
+              min = 0,
+              max = quota_max,
+              value = quota_max,
+              step = 0.25),
+  sliderInput("mes_docspostdocs_all",
+              "quota docs/postdocs, tous motifs, t eCO2/an",
+              min = 0,
+              max = quota_max,
+              value = quota_max,
+              step = 0.25),
+  
   
   h4("Vous pouvez ensuite définir des quotas plus stricts pour les colloques (personnels = permanents, docs/post-docs, associés):"),
   tags$br(),
-  sliderInput("mes3",
+  sliderInput("mes_pers_coll",
               "quota personnels, colloques, t eCO2/an",
               min = 0,
-              max = 5,
-              value = 5,
+              max = quota_max,
+              value = quota_max,
               step = 0.25), 
-  sliderInput("mes2",
+  sliderInput("mes_ext_coll",
               "quota externes, colloques,t eCO2/an",
               min = 0,
-              max = 5,
-              value = 5,
+              max = quota_max,
+              value = quota_max,
               step = 0.25),
-  
-  h4("Et enfin des quotas plus stricts pour les permanents :"),
-  tags$br(),
-  
-  sliderInput("mes4",
-              "quota permanents, tous motifs, t eCO2/an",
-              min = 0,
-              max = 10,
-              value = 10,
-              step = 0.25),
-  sliderInput("mes1",
+  sliderInput("mes_perm_coll",
               "quota permanents, colloques, t eCO2/an",
               min = 0,
-              max = 5,
-              value = 5,
+              max = quota_max,
+              value = quota_max,
+              step = 0.25),
+  sliderInput("mes_docspostdocs_coll",
+              "quota docs/postdocs, colloques, t eCO2/an",
+              min = 0,
+              max = quota_max,
+              value = quota_max,
               step = 0.25),
   
+  tags$br(),
+
   
   
   # Show a plot of the generated distribution
@@ -225,10 +237,14 @@ ui <- dashboardPage(
       textOutput("text_quota_bges_reduit"), 
       textOutput("text_quota_p_reduc"),
       tags$br(),
+      h5(strong("Mesures de report modal :")),
       textOutput("text_report_mesures_dist"),
       "Destinations avion interdit :",br(),
     textOutput("text_report_mesures_pays"),
       textOutput("text_report_n_missions"),
+    tags$br(),
+    h5(strong("Mesures de quotas :")),
+    htmlOutput("text_quotas"),
       textOutput("text_quota_n_agent"),
       tags$br()
       )
@@ -304,12 +320,6 @@ server <- function(input, output) {
   output$text_report_mesures_pays <- renderText(paste(paste(input$countries_plane, sep = ",")))
   output$text_report_n_missions <- renderText(paste("Nombre de missions impactées par le report modal :",
                                                     nrow(df_missions)-nrow(df_missions_reduc())))
-  
-  # output$text_report_mesures_pays <- renderUI({
-  #   str1 <- paste("Destinations avion interdit :")
-  #   str2 <- paste(input$countries_plane)
-  #   markdown(paste(str1, str2, sep = '\n\n'))
-  # })
   
   
   df_missions_reduc_pour_plot <- reactive({
@@ -462,87 +472,98 @@ server <- function(input, output) {
   })
   
   
+  
   df_agent_reduc <- reactive({
     
     ### mesure : quota perm, colloques
-    quota_perm_coll <- input$mes1 * 3000
+    quota_perm_coll <- input$mes_perm_coll * 3000
     
-    df_agent_reduc_perm_coll <- df_agent() %>%
+  df_1 <- df_agent() %>%
       dplyr::mutate(colloques = case_when(
         statut == "permanents" & colloques > quota_perm_coll ~ quota_perm_coll,
         TRUE ~ colloques)) %>%
-      dplyr::mutate(total_quota = colloques + etude_terrain + autres)
+      dplyr::mutate(total_quota = colloques + etude_terrain + autres) %>%
+    dplyr::mutate(total = total_quota + missions_longues)
     
     ### mesure : quota ext, colloques
-    quota_ext_coll <- input$mes2 * 3000
-    previous_df <- df_agent_reduc_perm_coll
-    
-    df_agent_reduc_ext_coll <- previous_df %>%
+    quota_ext_coll <- input$mes_ext_coll * 3000
+    previous_df <- df_1
+
+    df_2 <- previous_df %>%
       dplyr::mutate(colloques = case_when(
         statut == "externes" & colloques > quota_ext_coll ~ quota_ext_coll,
         TRUE ~ colloques)) %>%
-      dplyr::mutate(total_quota = colloques + etude_terrain + autres)
+      dplyr::mutate(total_quota = colloques + etude_terrain + autres)%>%
+      dplyr::mutate(total = total_quota + missions_longues)
 
     ### mesure : quota personnels, colloques
-    quota_all_coll <- input$mes3 * 3000
-    previous_df <- df_agent_reduc_ext_coll
+    quota_pers_coll <- input$mes_pers_coll * 3000
+    previous_df <- df_2
 
-    df_agent_reduc_all_coll <- previous_df %>%
+    df_3 <- previous_df %>%
       dplyr::mutate(colloques = case_when(
-        statut != "externes" & colloques > quota_all_coll ~ quota_all_coll,
+        statut != "externes" & colloques > quota_pers_coll ~ quota_pers_coll,
         TRUE ~ colloques)) %>%
-      dplyr::mutate(total_quota = colloques + etude_terrain + autres)
+      dplyr::mutate(total_quota = colloques + etude_terrain + autres)%>%
+      dplyr::mutate(total = total_quota + missions_longues)
+
+    ### mesure : quota docspostdocs, colloques
+    quota_docspostdocs_coll <- input$mes_docspostdocs_coll * 3000
+    previous_df <- df_3
+
+    df_4 <- previous_df %>%
+      dplyr::mutate(colloques = case_when(
+        statut == "doc_postdoc" & colloques > quota_docspostdocs_coll ~ quota_docspostdocs_coll,
+        TRUE ~ colloques)) %>%
+      dplyr::mutate(total_quota = colloques + etude_terrain + autres)%>%
+      dplyr::mutate(total = total_quota + missions_longues)
 
     ### mesure : quota perm, tout
-    quota_perm_all <- input$mes4 * 3000
-    previous_df <- df_agent_reduc_all_coll
+    quota_perm_all <- input$mes_perm_all * 3000
+    previous_df <- df_4
 
-    df_agent_reduc_perm_all <- previous_df %>%
+    df_5 <- previous_df %>%
       dplyr::select(-c("colloques","autres","etude_terrain")) %>%
       dplyr::mutate(total_quota = case_when(
         statut == "permanents" & total_quota >  quota_perm_all ~  quota_perm_all,
-        TRUE ~ total_quota))
+        TRUE ~ total_quota))%>%
+      dplyr::mutate(total = total_quota + missions_longues)
 
-    ### mesure : quota ext, tout
-    quota_ext_all <- input$mes5 * 3000
-    previous_df <- df_agent_reduc_perm_all
+### mesure : quota ext, tout
+quota_ext_all <- input$mes_ext_all * 3000
+previous_df <- df_5
 
-    df_agent_reduc_ext_all <- previous_df %>%
+df_6 <- previous_df %>%
+  dplyr::mutate(total_quota = case_when(
+    statut == "externes" & total_quota >  quota_ext_all ~  quota_ext_all,
+    TRUE ~ total_quota))%>%
+  dplyr::mutate(total = total_quota + missions_longues)
+
+    ### mesure : quota docspostdocs, tout
+    quota_docspostdocs_all <- input$mes_docspostdocs_all * 3000
+    previous_df <- df_6
+
+    df_7 <- previous_df %>%
       dplyr::mutate(total_quota = case_when(
-        statut == "externes" & total_quota >  quota_ext_all ~  quota_ext_all,
-        TRUE ~ total_quota))
+        statut == "doc_postdoc" & total_quota >  quota_docspostdocs_all ~  quota_docspostdocs_all,
+        TRUE ~ total_quota))%>%
+      dplyr::mutate(total = total_quota + missions_longues)
 
     ### mesure : quota personnels, tout
-    quota_all_all <- input$mes6 * 3000
-    previous_df <- df_agent_reduc_ext_all
+    quota_pers_all <- input$mes_pers_all * 3000
+    previous_df <- df_7
 
-    df_agent_reduc_all_all <- previous_df %>%
+    df_8 <- previous_df %>%
       dplyr::mutate(total_quota = case_when(
-        statut != "externes" & total_quota > quota_all_all ~ quota_all_all,
+        statut != "externes" & total_quota > quota_pers_all ~ quota_pers_all,
         TRUE ~ total_quota)) %>%
     dplyr::mutate(total = total_quota + missions_longues)
-    
-    
-    df_agent_reduc_all_all
+
+
+    return(df_8)
     
   })
 
-
-# output$dt <- DT::renderDataTable(
-#   df_agent_reduc() %>%
-#     dplyr::group_by(statut) %>%
-#     dplyr::summarise(total = sum(as.numeric(total)/1000)) %>%
-#     dplyr::mutate(across(where(is.numeric), \(x) round(x, 0))),
-#   rownames = FALSE,
-#   # extensions = c("Buttons", "Scroller"),
-#   # options = list(
-#   #   pageLength = 10,
-#   #   # lengthMenu = c(5, 10, 15, 20),
-#   #   # buttons = c("csv", "pdf", "copy"),
-#   #   # dom = "Bfrtip",
-#   #   # scrollX = 250
-#   # )
-# )
   
   bges_reduit <- reactive({
    sum(df_agent_reduc()$total)
@@ -555,7 +576,7 @@ server <- function(input, output) {
   
     output$text_quota_bges_reduit <- renderText(paste0("BGES réduit : ", round(bges_reduit()/1000,1)," t eCO2"))
     output$text_quota_p_reduc <- renderText(paste0("Pourcentage de réduction : ", round(pourcentage_reduction() * 100, 1)," %"))
-    output$text_quota_n_agent <- renderText(paste("Nombre d'agents impactés par les quotas (uniquement) :", length(which(round(df_agent_reduc()$total,1) < round(df_agent()$total,1)))))
+    output$text_quota_n_agent <- renderText(paste("Nombre d'agents impactés par les quotas :", length(which(round(df_agent_reduc()$total,1) < round(df_agent()$total,1)))))
     # length(which(round(df_agent_reduc()$total,1) < round(df_agent()$total,1)))))
 
 
@@ -564,6 +585,22 @@ server <- function(input, output) {
       dplyr::mutate(across(where(is.numeric), \(x) round(x, 1)))
     
   })
+  
+  
+  output$text_quotas <- renderUI({
+    str1 <- ifelse(input$mes_pers_all==quota_max, "", paste("Quota personnels, tous motifs :", input$mes_pers_all, "t eqCO2"))
+    str2 <- ifelse(input$mes_ext_all==quota_max, "", paste("Quota externes, tous motifs :", input$mes_ext_all, "t eqCO2"))
+    str3 <- ifelse(input$mes_perm_all==quota_max, "", paste("Quota permanents, tous motifs :", input$mes_perm_all, "t eqCO2"))
+    str4 <- ifelse(input$mes_docspostdocs_all==quota_max, "", paste("Quota docspostdocs, tous motifs :", input$mes_docspostdocs_all, "t eqCO2"))
+    str5 <- ifelse(input$mes_pers_coll==quota_max, "", paste("Quota personnels, colloques :", input$mes_pers_coll, "t eqCO2"))
+    str6 <- ifelse(input$mes_ext_coll==quota_max, "", paste("Quota externes, colloques :", input$mes_ext_coll, "t eqCO2"))
+    str7 <- ifelse(input$mes_perm_coll==quota_max, "", paste("Quota permanents, colloques :", input$mes_perm_coll, "t eqCO2"))
+    str8 <- ifelse(input$mes_docspostdocs_coll==quota_max, "", paste("Quota docspostdocs, colloques :", input$mes_docspostdocs_coll, "t eqCO2"))
+    
+    markdown(paste(str1, str2,str3,str4,str5,str6,str7,str8, sep = '\n\n'))
+  })
+  
+  
   
   
   ##### graph histo pour quota
