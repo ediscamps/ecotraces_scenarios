@@ -28,49 +28,41 @@ ui_tab1 <- fluidPage(
   br(),
   br(),
   h4(strong("Comment utiliser cet outil ?")),
-  "En cliquant dans le menu à gauche sur Paramétrages des mesures, vous pourrez sélectionner quelques mesures (report modal, quotas). Le résultat en terme de pourcentage de réduction s'affichera sur la gauche.",
+  "En cliquant dans le menu à gauche sur les onglets Paramétrages, vous pourrez sélectionner quelques mesures (report modal, quotas). Le résultat en terme de pourcentage de réduction s'affichera sur la gauche.",
   br(),
   br(),
   br(),
   br(),
-  em("Cette application a été conçue par Emmanuel Discamps & Marc Thomas, dans le but d'aider l'ensemble des personnels de TRACES lors des ateliers EcoTRACES visant à la conception de mesures de réduction de nos émissions."),
+  em("Cette application a été conçue par Emmanuel Discamps, avec quelques ajouts par Marc Thomas, dans le but d'aider l'ensemble des personnels de TRACES lors des ateliers EcoTRACES visant à la conception de mesures de réduction de nos émissions."),
   br(),
-  em("Nous espérons bientôt ajouter de nouvelles fonctionnalités, comme une mesure de report modal avec durée de trajet en train (ex : <6h), ou des exemptions pour les quotas (ex : missions longues de 1 mois)")
 )
 
 
 ui_tab2 <- fluidPage(
   
-h3(strong("1) Appliquer des mesures de report modal")),
+h3(strong("Appliquer des mesures de report modal")),
 "Le report modal consiste à remplacer l'avion par d'autres moyens de transport (ex : train) pour certaines destinations.",
 "Ici, les vols de correspondance (par exemple un trajet Toulouse - Paris avant de prendre un vol international depuis Paris) ne sont PAS concernés.",
 tags$br(),br(),
 sliderInput("distance_plane",
             strong("Distance (km) en dessous de laquelle l'avion est interdit (hors correspondances, trajet aller)"),
             min = 0,
-            max = 24000,
+            max = 3000,
             value = 0,
             step = 100),
 h6("Vous pouvez utiliser les flèches du clavier pour ajuster plus précisément"),
+em("Dans le contexte de TRACES, les correspondances approximatives entre distance et durée de trajet en train sont :"),br(),
+em("- environ 700 km pour 5h ou 6h de trajet (afin d'exclure Paris), ce qui surestime le % de réduction (car cela exclu Dijon, Genève, Madrid, Nantes, Nice, etc qui ne devraient pas l'être)"),br(),
+em("- environ 900 km pour 7h de trajet"),br(),
+em("- environ 1000 km pour 8h de trajet"),br(),
 tags$br(),
 
-checkboxGroupInput("avion", strong("Destinations non autorisées en avion (hors correspondances)"),
+checkboxGroupInput("countries_plane", strong("Destinations non autorisées en avion (hors correspondances)"),
                    choices = c(unique(df_missions$destination)),
                    selected = NULL,
                    inline = F
 ),
 tags$br(),
-# sliderInput("distance_car",
-#             strong("Distance autorisée en voiture"),
-#             min = 0,
-#             max = 5000,
-#             value = 5000)
-
-  # textOutput("text_dest"),
-  # h5(strong("Bilan après mise en place des mesures :")),
-  # "A l'échelle du labo, le BGES sur 3 ans est de 437,8 t eCO2.",
-  # textOutput("text_report_bges_reduit"), 
-  # textOutput("text_report_p_reduc"),
   
   tags$br(),
   plotOutput("detail_transport"),
@@ -78,107 +70,115 @@ tags$br(),
   plotOutput("detail_destination"),
   # DT::dataTableOutput("destination")
   # DT::dataTableOutput("transport")
-tags$br(),br(),
-             h3(strong("2) Appliquer des mesures de quotas")),
-             h5("Toutes les mesures proposées ci-dessous sont des quotas calculés en tonne de CO2, par an."),
-             tags$br(),
-             tags$style(".my-class {font-size: 75%; line-height: 1.6;}"),
-
-h4("Définissez d'abord des quotas généraux pour toutes les missions (personnels = permanents, docs/post-docs, associés) :"),
-h5("Pour rappel, un vol AR en avion hors Europe consomme environ 2 t eCO2/an."),
-tags$br(),
-
-sliderInput("mes6",
-            "quota personnels, tous motifs, t eCO2/an",
-            min = 0,
-            max = 10,
-            value = 10,
-            step = 0.25),
-sliderInput("mes5",
-            "quota externes, tous motifs, t eCO2/an",
-            min = 0,
-            max = 10,
-            value = 10,
-            step = 0.25),
-
-h4("Vous pouvez ensuite définir des quotas plus stricts pour les colloques (personnels = permanents, docs/post-docs, associés):"),
-tags$br(),
-             sliderInput("mes3",
-                         "quota personnels, colloques, t eCO2/an",
-                         min = 0,
-                         max = 5,
-                         value = 5,
-                         step = 0.25), 
-sliderInput("mes2",
-                         "quota externes, colloques,t eCO2/an",
-                         min = 0,
-                         max = 5,
-                         value = 5,
-                         step = 0.25),
-
-h4("Et enfin des quotas plus stricts pour les permanents :"),
-tags$br(),
-            
-             sliderInput("mes4",
-                         "quota permanents, tous motifs, t eCO2/an",
-                         min = 0,
-                         max = 10,
-                         value = 10,
-                         step = 0.25),
-sliderInput("mes1",
-            "quota permanents, colloques, t eCO2/an",
-            min = 0,
-            max = 5,
-            value = 5,
-            step = 0.25),
-             
-           
-           
-           # Show a plot of the generated distribution
-            br(),br(),
-             h5(strong("Impact de la réduction selon le statut de l'agent :")),
-             tags$br(),
-             plotOutput("histo_quota"),
-            # plotOutput("histo_quota_motif"),
-             tags$br(),
-             # # DT::dataTableOutput("dt"),
-             # tags$br(),
-             # h5(strong("Moyenne agent :")),
-             # plotOutput("diff_avant_apres"),
-             # tags$br()
-           
-h3(strong("3) Mesures d'ajustement des quotas")),
-"Vous pouvez ajuster ici plus finement les quotas entre personnels ayant des besoins différents (par exemple, de missions sur le terrain à l'international).",
-tags$br(),br(),
-
-h4("Vous pouvez ici multiplier le quota des agents avec des missions de terrains à l'international, tout en maintenant le même taux de réduction :"),
-sliderInput("ajust1",
-            "Facteur de multiplication du quota des agents avec du terrain hors Europe, par rapport aux autres",
-            min = 1,
-            max = 30,
-            value = 1,
-            step = 0.25),
-textOutput("text_p_field_international"),
-textOutput("text_quota6_general"),
-textOutput("text_quota6_intern"),
-textOutput("text_quota6_nointern"),
-textOutput("text_quota4_general"),
-textOutput("text_quota4_intern"),
-textOutput("text_quota4_nointern"),
-
-br(),
-h4("Vous pouvez également décider d'exclure des quotas les missions longues, en utilisant le paramètre ci-dessous."),
-sliderInput("days_slider",
-            strong("Durée minimale des missions longues (en jours) :"),
-            min = 1,
-            max = 300,
-            value = 300,
-            step = 1),
-
-"Au-delà de ce nombre de jours, la mission ne compte plus dans le quota par agent."
 )
 
+
 ui_tab3 <- fluidPage(
+  
+
+  h3(strong("Appliquer des mesures de quotas")),
+  h5("Toutes les mesures proposées ci-dessous sont des quotas calculés en tonne de CO2, par an."),
+  tags$br(),
+  tags$style(".my-class {font-size: 75%; line-height: 1.6;}"),
+  
+  h4("Définissez d'abord des quotas généraux pour toutes les missions (personnels = permanents, docs/post-docs, associés) :"),
+  h5("Pour rappel, un vol AR en avion hors Europe consomme environ 2 t eCO2/an."),
+  tags$br(),
+  
+  sliderInput("mes6",
+              "quota personnels, tous motifs, t eCO2/an",
+              min = 0,
+              max = 10,
+              value = 10,
+              step = 0.25),
+  sliderInput("mes5",
+              "quota externes, tous motifs, t eCO2/an",
+              min = 0,
+              max = 10,
+              value = 10,
+              step = 0.25),
+  
+  h4("Vous pouvez ensuite définir des quotas plus stricts pour les colloques (personnels = permanents, docs/post-docs, associés):"),
+  tags$br(),
+  sliderInput("mes3",
+              "quota personnels, colloques, t eCO2/an",
+              min = 0,
+              max = 5,
+              value = 5,
+              step = 0.25), 
+  sliderInput("mes2",
+              "quota externes, colloques,t eCO2/an",
+              min = 0,
+              max = 5,
+              value = 5,
+              step = 0.25),
+  
+  h4("Et enfin des quotas plus stricts pour les permanents :"),
+  tags$br(),
+  
+  sliderInput("mes4",
+              "quota permanents, tous motifs, t eCO2/an",
+              min = 0,
+              max = 10,
+              value = 10,
+              step = 0.25),
+  sliderInput("mes1",
+              "quota permanents, colloques, t eCO2/an",
+              min = 0,
+              max = 5,
+              value = 5,
+              step = 0.25),
+  
+  
+  
+  # Show a plot of the generated distribution
+  br(),br(),
+  h5(strong("Impact de la réduction selon le statut de l'agent :")),
+  tags$br(),
+  plotOutput("histo_quota"),
+  # plotOutput("histo_quota_motif"),
+  tags$br(),
+  # # DT::dataTableOutput("dt"),
+  # tags$br(),
+  # h5(strong("Moyenne agent :")),
+  # plotOutput("diff_avant_apres"),
+  # tags$br()
+  
+  h3(strong("3) Mesures d'ajustement des quotas")),
+  "Vous pouvez ajuster ici plus finement les quotas entre personnels ayant des besoins différents (par exemple, de missions sur le terrain à l'international).",
+  tags$br(),br(),
+  
+  h4("Vous pouvez ici multiplier le quota des agents avec des missions de terrains à l'international, tout en maintenant le même taux de réduction :"),
+  sliderInput("ajust1",
+              "Facteur de multiplication du quota des agents avec du terrain hors Europe, par rapport aux autres",
+              min = 1,
+              max = 30,
+              value = 1,
+              step = 0.25),
+  textOutput("text_p_field_international"),
+  textOutput("text_quota6_general"),
+  textOutput("text_quota6_intern"),
+  textOutput("text_quota6_nointern"),
+  textOutput("text_quota4_general"),
+  textOutput("text_quota4_intern"),
+  textOutput("text_quota4_nointern"),
+  
+  br(),
+  h4("Vous pouvez également décider d'exclure des quotas les missions longues, en utilisant le paramètre ci-dessous."),
+  sliderInput("days_slider",
+              strong("Durée minimale des missions longues (en jours) :"),
+              min = 1,
+              max = 300,
+              value = 300,
+              step = 1),
+  
+  "Au-delà de ce nombre de jours, la mission ne compte plus dans le quota par agent."
+)
+
+
+
+
+ui_tab4 <- fluidPage(
       h5("Retrouvez ici les données brutes."),
   
     mainPanel(
@@ -213,8 +213,9 @@ ui <- dashboardPage(
   dashboardSidebar(width = 360,
     sidebarMenu(style = "position: fixed;",
                 menuItem("Introduction", tabName = "tab1"),
-                menuItem("Paramétrages des mesures", tabName = "tab2"),
-                menuItem("Tableaux de données", tabName = "tab3"),
+                menuItem("Paramétrages du report modal", tabName = "tab2"),
+                menuItem("Paramétrages des quotas", tabName = "tab3"),
+                menuItem("Tableaux de données", tabName = "tab4"),
 
       br(),
       textOutput("text_report_bges_original"),
@@ -224,6 +225,9 @@ ui <- dashboardPage(
       textOutput("text_quota_bges_reduit"), 
       textOutput("text_quota_p_reduc"),
       tags$br(),
+      textOutput("text_report_mesures_dist"),
+      "Destinations avion interdit :",br(),
+    textOutput("text_report_mesures_pays"),
       textOutput("text_report_n_missions"),
       textOutput("text_quota_n_agent"),
       tags$br()
@@ -246,6 +250,9 @@ ui <- dashboardPage(
       ),
       tabItem("tab3",
               ui_tab3
+      ),
+      tabItem("tab4",
+              ui_tab4
       )
       
      
@@ -275,7 +282,7 @@ server <- function(input, output) {
   df_missions_reduc <- reactive({
     df_missions %>% 
       dplyr::filter(!(mode == "plane" & distance_km < (input$distance_plane*2))) %>%
-      dplyr::filter(!(mode == "plane" & destination %in% input$avion))
+      dplyr::filter(!(mode == "plane" & destination %in% input$countries_plane))
     
     # je multiplie par 2 puisque l'objectif est d'exprimer une distance aller, mais la distance tot compte l'AR
   })
@@ -292,16 +299,24 @@ server <- function(input, output) {
   # 
   # output$text_report_p_reduc <- renderText(paste0("Pourcentage de réduction : ",round(pourcentage_reduction_plane_km() * 100, 1)," %"))
   
+  
+  output$text_report_mesures_dist <- renderText(paste("Distance avion interdit : <", input$distance_plane, "km"))
+  output$text_report_mesures_pays <- renderText(paste(paste(input$countries_plane, sep = ",")))
   output$text_report_n_missions <- renderText(paste("Nombre de missions impactées par le report modal :",
                                                     nrow(df_missions)-nrow(df_missions_reduc())))
   
-
+  # output$text_report_mesures_pays <- renderUI({
+  #   str1 <- paste("Destinations avion interdit :")
+  #   str2 <- paste(input$countries_plane)
+  #   markdown(paste(str1, str2, sep = '\n\n'))
+  # })
+  
   
   df_missions_reduc_pour_plot <- reactive({
     
     df_mes_modal <- df_missions %>% 
       dplyr::filter(!(mode == "plane" & distance_km < (input$distance_plane*2))) %>% #la distance est multipliée par 2, puisque la distance labos1pt5 est AR
-      dplyr::filter(!(mode == "plane" & destination %in% input$avion)) %>%
+      dplyr::filter(!(mode == "plane" & destination %in% input$countries_plane)) %>%
       dplyr::group_by(mode) %>%
       dplyr::summarise(total = sum(as.numeric(CO2eq_kg))/1000) %>%
       dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))) %>%
@@ -333,7 +348,7 @@ server <- function(input, output) {
     
     df_mes_modal <- df_missions %>% 
       dplyr::filter(!(mode == "plane" & distance_km < (input$distance_plane*2))) %>%
-      dplyr::filter(!(mode == "plane" & destination %in% input$avion)) %>%
+      dplyr::filter(!(mode == "plane" & destination %in% input$countries_plane)) %>%
       dplyr::group_by(destination) %>%
       dplyr::summarise(total = sum(as.numeric(CO2eq_kg))/1000) %>%
       dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))) %>%
@@ -385,7 +400,7 @@ server <- function(input, output) {
   # output$df_mission_reduit <- DT::renderDataTable(
   #   df_missions %>% 
   #     dplyr::filter(!(mode == "plane" & distance_km < (input$distance_plane*2))) %>%
-  #     dplyr::filter(!(mode == "plane" & destination %in% input$avion)) %>%
+  #     dplyr::filter(!(mode == "plane" & destination %in% input$countries_plane)) %>%
   #     dplyr::summarise(total = sum(as.numeric(CO2eq_kg))/1000) %>%
   #     dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))),
   #   rownames = FALSE,
