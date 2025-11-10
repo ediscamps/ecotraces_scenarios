@@ -1,4 +1,4 @@
-num_mission;CO2eq_kg;distance_km;year;statut;agent;destination;mode;motif;days
+﻿num_mission;CO2eq_kg;distance_km;year;statut;agent;destination;mode;motif;days
 5910;1650,6;10880,6;2019;permanents;112;Afrique;plane;inconnu;24
 5975;119,2;552,9;2019;permanents;294;France;car;inconnu;1
 6006;2,6;1111,9;2019;externes;249;France;train;autres;14

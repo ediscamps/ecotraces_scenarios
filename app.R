@@ -429,6 +429,7 @@ server <- function(input, output) {
     p_autres <- sum(x$autres) / (sum(x$total)-sum(x$inconnu))
     p_longues <- sum(x$missions_longues) / (sum(x$total)-sum(x$inconnu))
     
+    
     # y <- x %>%
     #   mutate(colloques = round(colloques + inconnu*p_coll,2)) %>%
     #   mutate(etude_terrain = round(etude_terrain + inconnu*p_etude,2)) %>%
@@ -506,11 +507,6 @@ server <- function(input, output) {
         TRUE ~ total_quota)) %>%
     dplyr::mutate(total = total_quota + missions_longues)
     
-
-      dplyr::mutate(total = case_when(
-        statut != "externes" & total > quota_all_all ~ quota_all_all,
-        TRUE ~ total))
-
     
     df_agent_reduc_all_all
     
