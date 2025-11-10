@@ -427,7 +427,14 @@ server <- function(input, output) {
     p_coll <- sum(x$colloques) / (sum(x$total)-sum(x$inconnu))
     p_etude <- sum(x$etude_terrain) / (sum(x$total)-sum(x$inconnu))
     p_autres <- sum(x$autres) / (sum(x$total)-sum(x$inconnu))
+<<<<<<< HEAD
     p_longues <- sum(x$missions_longues) / (sum(x$total)-sum(x$inconnu))
+=======
+<<<<<<< HEAD
+    p_longues <- sum(x$missions_longues) / (sum(x$total)-sum(x$inconnu))
+=======
+>>>>>>> 99fd674208ff34bf3ad62752eb775deb5f1780b4
+>>>>>>> 9cb97065e089d84b704d0512e07c906718130fab
     
     
     # y <- x %>%
@@ -440,7 +447,14 @@ server <- function(input, output) {
       mutate(colloques = colloques + inconnu*p_coll) %>%
       mutate(etude_terrain = etude_terrain + inconnu*p_etude) %>%
       mutate(autres = autres + inconnu*p_autres) %>%
+<<<<<<< HEAD
       mutate(missions_longues = missions_longues + inconnu*p_longues) %>%
+=======
+<<<<<<< HEAD
+      mutate(missions_longues = missions_longues + inconnu*p_longues) %>%
+=======
+>>>>>>> 99fd674208ff34bf3ad62752eb775deb5f1780b4
+>>>>>>> 9cb97065e089d84b704d0512e07c906718130fab
       select(-inconnu)
     
      return(y)
@@ -502,11 +516,23 @@ server <- function(input, output) {
     previous_df <- df_agent_reduc_ext_all
 
     df_agent_reduc_all_all <- previous_df %>%
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 9cb97065e089d84b704d0512e07c906718130fab
       dplyr::mutate(total_quota = case_when(
         statut != "externes" & total_quota > quota_all_all ~ quota_all_all,
         TRUE ~ total_quota)) %>%
     dplyr::mutate(total = total_quota + missions_longues)
     
+<<<<<<< HEAD
+=======
+=======
+      dplyr::mutate(total = case_when(
+        statut != "externes" & total > quota_all_all ~ quota_all_all,
+        TRUE ~ total))
+>>>>>>> 99fd674208ff34bf3ad62752eb775deb5f1780b4
+>>>>>>> 9cb97065e089d84b704d0512e07c906718130fab
     
     df_agent_reduc_all_all
     

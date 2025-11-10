@@ -1065,4 +1065,11 @@
 70870002;322,1;1245,6;2022;externes;15;France;plane;inconnu;4
 242082019;352,6;1365,6;2019;externes;407;France;plane;colloques;4
 242082022;5087,5;32086,4;2022;doc_postdoc;202;Europe;plane;etude_terrain;11
+<<<<<<< HEAD
 0;0;0;0;externes;407;France;train;inconnu;600
+=======
+<<<<<<< HEAD
+0;0;0;0;externes;407;France;train;inconnu;600
+=======
+>>>>>>> 99fd674208ff34bf3ad62752eb775deb5f1780b4
+>>>>>>> 9cb97065e089d84b704d0512e07c906718130fab
