@@ -742,12 +742,12 @@ df_6 <- previous_df %>%
   
   output$text_p_field_international <- renderText(paste0("Pourcentage d'agents (hors externes) avec des missions de terrain/étude hors Europe : ", round(pourcentage_field_international() * 100, 1)," %"))
   
-  output$text_quota4_general <- renderText(paste0("Quota permanents non ajusté (permanents, tous motifs) : ", input$mes4," t eCO2 par an"))
-  output$text_quota4_intern <- renderText(paste0("Quota permanents ajusté SANS terrain hors Europe (permanents, tous motifs) : ", input$mes4 * (1/ (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1))," t eCO2 par an"))
-  output$text_quota4_nointern <- renderText(paste0("Quota permanents ajusté AVEC terrain hors Europe (permanents, tous motifs) : ", input$mes4 * input$ajust1 / (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1)," t eCO2 par an"))
-  output$text_quota6_general <- renderText(paste0("Quota général non ajusté (tous personnels, tous motifs) : ", input$mes6," t eCO2 par an"))
-  output$text_quota6_intern <- renderText(paste0("Quota général ajusté SANS terrain hors Europe (tous personnels, tous motifs) : ", input$mes6 * (1/ (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1))," t eCO2 par an"))
-  output$text_quota6_nointern <- renderText(paste0("Quota général ajusté AVEC terrain hors Europe (tous personnels, tous motifs) : ", input$mes6 * input$ajust1 / (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1)," t eCO2 par an"))
+  output$text_quota4_general <- renderText(paste0("Quota permanents non ajusté (permanents, tous motifs) : ", input$mes_perm_all," t eCO2 par an"))
+  output$text_quota4_intern <- renderText(paste0("Quota permanents ajusté SANS terrain hors Europe (permanents, tous motifs) : ", input$mes_perm_all * (1/ (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1))," t eCO2 par an"))
+  output$text_quota4_nointern <- renderText(paste0("Quota permanents ajusté AVEC terrain hors Europe (permanents, tous motifs) : ", input$mes_perm_all * input$ajust1 / (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1)," t eCO2 par an"))
+  output$text_quota6_general <- renderText(paste0("Quota général non ajusté (tous personnels, tous motifs) : ", input$mes_pers_all," t eCO2 par an"))
+  output$text_quota6_intern <- renderText(paste0("Quota général ajusté SANS terrain hors Europe (tous personnels, tous motifs) : ", input$mes_pers_all * (1/ (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1))," t eCO2 par an"))
+  output$text_quota6_nointern <- renderText(paste0("Quota général ajusté AVEC terrain hors Europe (tous personnels, tous motifs) : ", input$mes_pers_all * input$ajust1 / (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1)," t eCO2 par an"))
   
   
   
