@@ -34,7 +34,7 @@ ui_tab1 <- fluidPage(
   br(),
   br(),
   br(),
-  em("Cette application a été conçue par Emmanuel Discamps, avec quelques ajouts par Marc Thomas, dans le but d'aider l'ensemble des personnels de TRACES lors des ateliers EcoTRACES visant à la conception de mesures de réduction de nos émissions."),
+  em("Cette application a été conçue par Emmanuel Discamps, avec l'aide de Marc Thomas pour les premières versions, dans le but d'aider l'ensemble des personnels de TRACES lors des ateliers EcoTRACES visant à la conception de mesures de réduction de nos émissions."),
   br(),
 )
 
@@ -78,11 +78,26 @@ ui_tab3 <- fluidPage(
   
 
   h3(strong("Appliquer des mesures de quotas")),
-  h5("Toutes les mesures proposées ci-dessous sont des quotas calculés en tonne de CO2, par an."),
+ 
+  radioButtons("type_quotas", "Type de quotas", c("Individuels", "Collectif", "Hybride")),
+  
+  conditionalPanel("input.type_quotas == 'Collectif'", 
+  sliderInput("quota_collectif","Quota 100% collectif (t eq CO2 / an):", 0, 100000, 0),
+  "A vous de décider des modalités de répartitions et de distributions des quotas !"),
+  
+  conditionalPanel("input.type_quotas == 'Hybride'", 
+                   br(),
+                   h4(strong("Réserve de quota collectif (quotas hybrides) :")),
+                  "Ce premier paramètre permet de réserver une partie des émissions pour le collectif.",br(),
+                   "Plus cette valeur est élevée, plus les quotas individuels devront être bas pour augmenter le % de réduction des émissions.",
+                   sliderInput("quota_hybride","Quota collectif (t eq CO2 / an):", 0, 150, 0),),
+  
+  conditionalPanel("input.type_quotas != 'Collectif'", 
   tags$br(),
   tags$style(".my-class {font-size: 75%; line-height: 1.6;}"),
+  h4(strong("Quotas individuels (tous motifs) :")),
   
-  h4("Définissez d'abord des quotas généraux pour toutes les missions, en fonction des statuts (personnels = permanents, docs/post-docs, associés) :"),
+  h5("Définissez d'abord des quotas généraux pour toutes les missions, en fonction des statuts (personnels = permanents, docs/post-docs, associés)."),
   h5("Pour rappel, un vol AR en avion hors Europe consomme environ 2 t eCO2/an."),
   tags$br(),
   
@@ -110,9 +125,9 @@ ui_tab3 <- fluidPage(
               max = quota_max,
               value = quota_max,
               step = 0.25),
-  
-  
-  h4("Vous pouvez ensuite définir des quotas plus stricts pour les colloques (personnels = permanents, docs/post-docs, associés):"),
+  br(),
+  h4(strong("Quotas individuels (colloques) :")),
+  h5("Vous pouvez ensuite définir des quotas plus stricts pour les colloques (personnels = permanents, docs/post-docs, associés)."),
   tags$br(),
   sliderInput("mes_pers_coll",
               "quota personnels, colloques, t eCO2/an",
@@ -138,8 +153,6 @@ ui_tab3 <- fluidPage(
               max = quota_max,
               value = quota_max,
               step = 0.25),
-  
-  tags$br(),
 
   
   
@@ -156,11 +169,9 @@ ui_tab3 <- fluidPage(
   # plotOutput("diff_avant_apres"),
   # tags$br()
   
-  h3(strong("3) Mesures d'ajustement des quotas")),
-  "Vous pouvez ajuster ici plus finement les quotas entre personnels ayant des besoins différents (par exemple, de missions sur le terrain à l'international).",
-  tags$br(),br(),
-  
-  h4("Vous pouvez ici multiplier le quota des agents avec des missions de terrains à l'international, tout en maintenant le même taux de réduction :"),
+  h4(strong("Multiplicateur d'ajustement pour terrains éloignés :")),
+  h5("Vous pouvez ajuster ici plus finement les quotas entre personnels ayant des besoins différents (par exemple, de missions sur le terrain à l'international)."),
+  h5("Vous pouvez ici multiplier le quota des agents avec des missions de terrains à l'international, tout en maintenant le même taux de réduction :"),
   sliderInput("ajust1",
               "Facteur de multiplication du quota des agents avec du terrain hors Europe, par rapport aux autres",
               min = 1,
@@ -176,7 +187,8 @@ ui_tab3 <- fluidPage(
   textOutput("text_quota4_nointern"),
   
   br(),
-  h4("Vous pouvez également décider d'exclure des quotas les missions longues, en utilisant le paramètre ci-dessous."),
+  h4(strong("Mesure d'exemption pour missions longues :")),
+  h5("Vous pouvez également décider d'exclure des quotas les missions longues, en utilisant le paramètre ci-dessous."),
   sliderInput("days_slider",
               strong("Durée minimale des missions longues (en jours) :"),
               min = 1,
@@ -184,7 +196,9 @@ ui_tab3 <- fluidPage(
               value = 300,
               step = 1),
   
-  "Au-delà de ce nombre de jours, la mission ne compte plus dans le quota par agent."
+  "Au-delà de ce nombre de jours, la mission ne compte plus dans le quota par agent.",br(),
+  "Ex : si vous sélectionnez 30, seules les missions de moins d'un mois seront décomptées dans le quota d'un agent."
+)
 )
 
 
@@ -239,13 +253,19 @@ ui <- dashboardPage(
       tags$br(),
       h5(strong("Mesures de report modal :")),
       textOutput("text_report_mesures_dist"),
-      "Destinations avion interdit :",br(),
-    textOutput("text_report_mesures_pays"),
+    textOutput("text_report_mesures_pays1"),
+    textOutput("text_report_mesures_pays2"),
       textOutput("text_report_n_missions"),
     tags$br(),
     h5(strong("Mesures de quotas :")),
-    htmlOutput("text_quotas"),
-      textOutput("text_quota_n_agent"),
+    textOutput("text_report_type_quotas"),
+    textOutput("text_report_quota_collectif"),
+    textOutput("text_report_quota_hybride"),
+    conditionalPanel("input.type_quotas != 'Collectif'",
+     htmlOutput("text_quotas"),
+     textOutput("text_multi"),
+     textOutput("text_report_missions_longues"),
+     textOutput("text_quota_n_agent")),
       tags$br()
       )
   
@@ -282,14 +302,22 @@ ui <- dashboardPage(
 
 
 ### SERVER ###
-server <- function(input, output) {
+server <- function(input, output, session) {
 
   ####################################### calcul du BGES original avant mesures #######################################
   
   bges_original <- reactive({
     sum(df_missions$CO2eq_kg)
   })
+
+  observeEvent(input$type_quotas, {
+    updateSliderInput(session, "quota_collectif", value = ceiling(as.numeric(bges_original()/3000)), max = ceiling(as.numeric(bges_original()/3000)))
+  }
+               )
   
+  output$bges_original <- reactive({
+    sum(df_missions$CO2eq_kg)
+  })
   output$text_report_bges_original <- renderText(paste0("BGES sur 3 ans (avant mesures) : ",round(bges_original()/1000,1)," t eCO2"))
   
   
@@ -316,9 +344,10 @@ server <- function(input, output) {
   # output$text_report_p_reduc <- renderText(paste0("Pourcentage de réduction : ",round(pourcentage_reduction_plane_km() * 100, 1)," %"))
   
   
-  output$text_report_mesures_dist <- renderText(paste("Distance avion interdit : <", input$distance_plane, "km"))
-  output$text_report_mesures_pays <- renderText(paste(paste(input$countries_plane, sep = ",")))
-  output$text_report_n_missions <- renderText(paste("Nombre de missions impactées par le report modal :",
+  output$text_report_mesures_dist <- renderText(ifelse(input$distance_plane==0,"" ,paste("Distance avion interdit : <", input$distance_plane, "km")))
+  output$text_report_mesures_pays1 <- renderText(ifelse(is.null(input$countries_plane), "", "Destinations avion interdites :"))
+  output$text_report_mesures_pays2 <- renderText(paste(paste(input$countries_plane, sep = ",")))
+  output$text_report_n_missions <- renderText(paste("Nombre estimé de missions impactées par le report modal :",
                                                     nrow(df_missions)-nrow(df_missions_reduc())))
   
   
@@ -428,6 +457,14 @@ server <- function(input, output) {
   
   
   ############tentative d'integrations des deux types de mesures ensembles
+  
+  ##output text pour resumer sur le côté
+  output$text_report_type_quotas <- renderText(paste("Type de quotas : ",input$type_quotas))
+  output$text_report_quota_hybride <- renderText(ifelse(input$type_quotas=="Hybride",paste("Quota collectif : ",input$quota_hybride, "t/an"),""))
+  output$text_report_quota_collectif <- renderText(ifelse(input$type_quotas=="Collectif",paste("Quota collectif :", input$quota_collectif, "t/an"),""))
+  output$text_report_missions_longues <- renderText(ifelse(input$days_slider == 300, "", paste("Exemption pour missions longues : au-delà de ", input$days_slider, "jours")))
+  
+  
   
   df_agent <- reactive({
   
@@ -566,17 +603,21 @@ df_6 <- previous_df %>%
 
   
   bges_reduit <- reactive({
-   sum(df_agent_reduc()$total)
-    # sum(df_imported$CO2_raw)))
+    case_when(
+      input$type_quotas == "Individuels" ~ sum(df_agent_reduc()$total),
+      input$type_quotas == "Collectif" ~ input$quota_collectif*3000,
+      input$type_quotas == "Hybride" ~ sum(df_agent_reduc()$total)+input$quota_hybride*3000
+                                               )
+    
   })
   
   pourcentage_reduction <- reactive({
-    1 - sum(df_agent_reduc()$total) / sum(df_missions$CO2eq_kg)
+    1 - bges_reduit() / sum(df_missions$CO2eq_kg)
   })
   
     output$text_quota_bges_reduit <- renderText(paste0("BGES réduit : ", round(bges_reduit()/1000,1)," t eCO2"))
     output$text_quota_p_reduc <- renderText(paste0("Pourcentage de réduction : ", round(pourcentage_reduction() * 100, 1)," %"))
-    output$text_quota_n_agent <- renderText(paste("Nombre d'agents impactés par les quotas :", length(which(round(df_agent_reduc()$total,1) < round(df_agent()$total,1)))))
+    output$text_quota_n_agent <- renderText(paste("Nombre estimé d'agents impactés par les quotas :", length(which(round(df_agent_reduc()$total,1) < round(df_agent()$total,1)))))
     # length(which(round(df_agent_reduc()$total,1) < round(df_agent()$total,1)))))
 
 
@@ -588,14 +629,14 @@ df_6 <- previous_df %>%
   
   
   output$text_quotas <- renderUI({
-    str1 <- ifelse(input$mes_pers_all==quota_max, "", paste("Quota personnels, tous motifs :", input$mes_pers_all, "t eqCO2"))
-    str2 <- ifelse(input$mes_ext_all==quota_max, "", paste("Quota externes, tous motifs :", input$mes_ext_all, "t eqCO2"))
-    str3 <- ifelse(input$mes_perm_all==quota_max, "", paste("Quota permanents, tous motifs :", input$mes_perm_all, "t eqCO2"))
-    str4 <- ifelse(input$mes_docspostdocs_all==quota_max, "", paste("Quota docspostdocs, tous motifs :", input$mes_docspostdocs_all, "t eqCO2"))
-    str5 <- ifelse(input$mes_pers_coll==quota_max, "", paste("Quota personnels, colloques :", input$mes_pers_coll, "t eqCO2"))
-    str6 <- ifelse(input$mes_ext_coll==quota_max, "", paste("Quota externes, colloques :", input$mes_ext_coll, "t eqCO2"))
-    str7 <- ifelse(input$mes_perm_coll==quota_max, "", paste("Quota permanents, colloques :", input$mes_perm_coll, "t eqCO2"))
-    str8 <- ifelse(input$mes_docspostdocs_coll==quota_max, "", paste("Quota docspostdocs, colloques :", input$mes_docspostdocs_coll, "t eqCO2"))
+    str1 <- ifelse(input$mes_pers_all==quota_max, "", paste("Quota personnels, tous motifs :", input$mes_pers_all, "t/an"))
+    str2 <- ifelse(input$mes_ext_all==quota_max, "", paste("Quota externes, tous motifs :", input$mes_ext_all, "t/an"))
+    str3 <- ifelse(input$mes_perm_all==quota_max, "", paste("Quota permanents, tous motifs :", input$mes_perm_all, "t/an"))
+    str4 <- ifelse(input$mes_docspostdocs_all==quota_max, "", paste("Quota docspostdocs, tous motifs :", input$mes_docspostdocs_all, "t/an"))
+    str5 <- ifelse(input$mes_pers_coll==quota_max, "", paste("Quota personnels, colloques :", input$mes_pers_coll, "t/an"))
+    str6 <- ifelse(input$mes_ext_coll==quota_max, "", paste("Quota externes, colloques :", input$mes_ext_coll, "t/an"))
+    str7 <- ifelse(input$mes_perm_coll==quota_max, "", paste("Quota permanents, colloques :", input$mes_perm_coll, "t/an"))
+    str8 <- ifelse(input$mes_docspostdocs_coll==quota_max, "", paste("Quota docspostdocs, colloques :", input$mes_docspostdocs_coll, "t/an"))
     
     markdown(paste(str1, str2,str3,str4,str5,str6,str7,str8, sep = '\n\n'))
   })
@@ -741,6 +782,8 @@ df_6 <- previous_df %>%
   })
   
   output$text_p_field_international <- renderText(paste0("Pourcentage d'agents (hors externes) avec des missions de terrain/étude hors Europe : ", round(pourcentage_field_international() * 100, 1)," %"))
+  
+  output$text_multi <- renderText(ifelse(input$ajust1 == 1, "", paste("Multiplicateur terrains hors EU : x", input$ajust1)))
   
   output$text_quota4_general <- renderText(paste0("Quota permanents non ajusté (permanents, tous motifs) : ", input$mes_perm_all," t eCO2 par an"))
   output$text_quota4_intern <- renderText(paste0("Quota permanents ajusté SANS terrain hors Europe (permanents, tous motifs) : ", input$mes_perm_all * (1/ (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1))," t eCO2 par an"))
