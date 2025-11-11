@@ -34,7 +34,7 @@ ui_tab1 <- fluidPage(
   br(),
   br(),
   br(),
-  em("Cette application a été conçue par Emmanuel Discamps, avec l'aide de Marc Thomas pour les premières versions, dans le but d'aider l'ensemble des personnels de TRACES lors des ateliers EcoTRACES visant à la conception de mesures de réduction de nos émissions."),
+  em("Cette application a été conçue par Emmanuel Discamps dans le but d'aider l'ensemble des personnels de TRACES lors des ateliers EcoTRACES visant à la conception de mesures de réduction de nos émissions. Merci à Marc Thomas pour son aide dans le codage des premières versions."),
   br(),
 )
 
@@ -98,29 +98,50 @@ ui_tab3 <- fluidPage(
   h4(strong("Quotas individuels (tous motifs) :")),
   
   h5("Définissez d'abord des quotas généraux pour toutes les missions, en fonction des statuts (personnels = permanents, docs/post-docs, associés)."),
+  h5("La distinction avec/sans recherche hors Europe permet de différencier les membres dont les zones de terrains/études privilégiées sont extra-européennes."),
   h5("Pour rappel, un vol AR en avion hors Europe consomme environ 2 t eCO2/an."),
   tags$br(),
   
-  sliderInput("mes_pers_all",
-              "quota personnels, tous motifs, t eCO2/an",
+  sliderInput("mes_pers_all_close",
+              "quota personnels sans recherche hors Europe, tous motifs, t eCO2/an",
+              min = 0,
+              max = quota_max,
+              value = quota_max,
+              step = 0.25),
+  
+  sliderInput("mes_pers_all_far",
+              "quota personnels AVEC recherche hors Europe, tous motifs, t eCO2/an",
+              min = 0,
+              max = quota_max,
+              value = quota_max,
+              step = 0.25),
+
+  sliderInput("mes_perm_all_close",
+              "quota permanents sans recherche hors Europe, tous motifs, t eCO2/an",
+              min = 0,
+              max = quota_max,
+              value = quota_max,
+              step = 0.25),
+  sliderInput("mes_perm_all_far",
+              "quota permanents AVEC recherche hors Europe, tous motifs, t eCO2/an",
+              min = 0,
+              max = quota_max,
+              value = quota_max,
+              step = 0.25),
+  sliderInput("mes_docspostdocs_all_close",
+              "quota docs/postdocs sans recherche hors Europe, tous motifs, t eCO2/an",
+              min = 0,
+              max = quota_max,
+              value = quota_max,
+              step = 0.25),
+  sliderInput("mes_docspostdocs_all_far",
+              "quota docs/postdocs AVEC recherche hors Europe, tous motifs, t eCO2/an",
               min = 0,
               max = quota_max,
               value = quota_max,
               step = 0.25),
   sliderInput("mes_ext_all",
               "quota externes, tous motifs, t eCO2/an",
-              min = 0,
-              max = quota_max,
-              value = quota_max,
-              step = 0.25),
-  sliderInput("mes_perm_all",
-              "quota permanents, tous motifs, t eCO2/an",
-              min = 0,
-              max = quota_max,
-              value = quota_max,
-              step = 0.25),
-  sliderInput("mes_docspostdocs_all",
-              "quota docs/postdocs, tous motifs, t eCO2/an",
               min = 0,
               max = quota_max,
               value = quota_max,
@@ -135,12 +156,7 @@ ui_tab3 <- fluidPage(
               max = quota_max,
               value = quota_max,
               step = 0.25), 
-  sliderInput("mes_ext_coll",
-              "quota externes, colloques,t eCO2/an",
-              min = 0,
-              max = quota_max,
-              value = quota_max,
-              step = 0.25),
+ 
   sliderInput("mes_perm_coll",
               "quota permanents, colloques, t eCO2/an",
               min = 0,
@@ -149,6 +165,12 @@ ui_tab3 <- fluidPage(
               step = 0.25),
   sliderInput("mes_docspostdocs_coll",
               "quota docs/postdocs, colloques, t eCO2/an",
+              min = 0,
+              max = quota_max,
+              value = quota_max,
+              step = 0.25),
+  sliderInput("mes_ext_coll",
+              "quota externes, colloques,t eCO2/an",
               min = 0,
               max = quota_max,
               value = quota_max,
@@ -173,30 +195,26 @@ ui_tab3 <- fluidPage(
   plotOutput("histo_agent_docspostdocs"),
 
 
-  # plotOutput("histo_quota_motif"),
   tags$br(),
-  # # DT::dataTableOutput("dt"),
-  # tags$br(),
-  # h5(strong("Moyenne agent :")),
-  # plotOutput("diff_avant_apres"),
-  # tags$br()
+ 
   
-  h4(strong("Multiplicateur d'ajustement pour terrains éloignés :")),
-  h5("Vous pouvez ajuster ici plus finement les quotas entre personnels ayant des besoins différents (par exemple, de missions sur le terrain à l'international)."),
-  h5("Vous pouvez ici multiplier le quota des agents avec des missions de terrains à l'international, tout en maintenant le même taux de réduction :"),
-  sliderInput("ajust1",
-              "Facteur de multiplication du quota des agents avec du terrain hors Europe, par rapport aux autres",
-              min = 1,
-              max = 30,
-              value = 1,
-              step = 0.25),
-  textOutput("text_p_field_international"),
-  textOutput("text_quota6_general"),
-  textOutput("text_quota6_intern"),
-  textOutput("text_quota6_nointern"),
-  textOutput("text_quota4_general"),
-  textOutput("text_quota4_intern"),
-  textOutput("text_quota4_nointern"),
+  #### multiplicateur = n'est plus utilisé
+  # h4(strong("Multiplicateur d'ajustement pour terrains éloignés :")),
+  # h5("Vous pouvez ajuster ici plus finement les quotas entre personnels ayant des besoins différents (par exemple, de missions sur le terrain à l'international)."),
+  # h5("Vous pouvez ici multiplier le quota des agents avec des missions de terrains à l'international, tout en maintenant le même taux de réduction :"),
+  # sliderInput("ajust1",
+  #             "Facteur de multiplication du quota des agents avec du terrain hors Europe, par rapport aux autres",
+  #             min = 1,
+  #             max = 30,
+  #             value = 1,
+  #             step = 0.25),
+  # textOutput("text_p_field_international"),
+  # textOutput("text_quota6_general"),
+  # textOutput("text_quota6_intern"),
+  # textOutput("text_quota6_nointern"),
+  # textOutput("text_quota4_general"),
+  # textOutput("text_quota4_intern"),
+  # textOutput("text_quota4_nointern"),
   
   br(),
   h4(strong("Mesure d'exemption pour missions longues :")),
@@ -248,7 +266,7 @@ ui_tab4 <- fluidPage(
 ui <- dashboardPage(
   
   dashboardHeader(title = "EcoTRACES"),
-  dashboardSidebar(width = 360,
+  dashboardSidebar(width = 400,
     sidebarMenu(style = "position: fixed;",
                 menuItem("Introduction", tabName = "tab1"),
                 menuItem("Paramétrages du report modal", tabName = "tab2"),
@@ -433,41 +451,6 @@ server <- function(input, output, session) {
   )
   
   
-  
-  # output$df_agent_reduit <- DT::renderDataTable(
-  #   df_agent_reduc() %>%
-  #     dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))),
-  #   rownames = FALSE,
-  #   extensions = c("Buttons", "Scroller"),
-  #   options = list(
-  #     pageLength = 10,
-  #     lengthMenu = c(5, 10, 15, 20),
-  #     buttons = c("csv", "pdf", "copy"),
-  #     dom = "Bfrtip",
-  #     scrollX = 250
-  #   )
-  # )
-  
-  # output$df_mission_reduit <- DT::renderDataTable(
-  #   df_missions %>% 
-  #     dplyr::filter(!(mode == "plane" & distance_km < (input$distance_plane*2))) %>%
-  #     dplyr::filter(!(mode == "plane" & destination %in% input$countries_plane)) %>%
-  #     dplyr::summarise(total = sum(as.numeric(CO2eq_kg))/1000) %>%
-  #     dplyr::mutate(across(where(is.numeric), \(x) round(x, 2))),
-  #   rownames = FALSE,
-  #   extensions = c("Buttons", "Scroller"),
-  #   options = list(
-  #     pageLength = 10,
-  #     lengthMenu = c(5, 10, 15, 20),
-  #     buttons = c("csv", "pdf", "copy"),
-  #     dom = "Bfrtip",
-  #     scrollX = 250
-  #   )
-  # )
-  
-  
-  
-  
   ############tentative d'integrations des deux types de mesures ensembles
   
   ##output text pour resumer sur le côté
@@ -480,24 +463,24 @@ server <- function(input, output, session) {
   
   df_agent <- reactive({
   
-    # identification des agents avec terrains éloignés
-    df_type_terrain_agents <-  df_missions %>%
-      select(agent, statut, motif, destination) %>%
-      filter(motif== "etude_terrain") %>%
-      group_by(agent) %>%
-      arrange(agent) %>%
-      mutate(type_terrain = case_when(
-        destination %in% c("Afrique", "Asie", "Amériques", "Proche-Orient") ~  "eloigne",
-        TRUE ~ "no_eloigne"))    %>%
-      select(agent, type_terrain) %>%
-      group_by(agent, type_terrain) %>%
-      tally() %>%
-      spread(type_terrain, n) %>%
-      mutate(type_terrain = case_when(
-        eloigne>0 ~  "eloigne",
-        TRUE ~ "no_eloigne")) %>%
-      select(agent, type_terrain)
-    
+    # # identification des agents avec terrains éloignés = ancienne version, auto mais marche mal
+    # df_type_terrain_agents <-  df_missions %>%
+    #   select(agent, statut, motif, destination) %>%
+    #   filter(motif== "etude_terrain") %>%
+    #   group_by(agent) %>%
+    #   arrange(agent) %>%
+    #   mutate(type_terrain = case_when(
+    #     destination %in% c("Afrique", "Asie", "Amériques", "Proche-Orient") ~  "far",
+    #     TRUE ~ "close"))    %>%
+    #   select(agent, type_terrain) %>%
+    #   group_by(agent, type_terrain) %>%
+    #   tally() %>%
+    #   spread(type_terrain, n) %>%
+    #   mutate(type_terrain = case_when(
+    #     far>0 ~  "far",
+    #     TRUE ~ "close")) %>%
+    #   select(agent, type_terrain)
+
     
   
             # les missions longues sont ecartees ici
@@ -508,7 +491,7 @@ server <- function(input, output, session) {
 
     
     x <- df %>%
-      select(agent, statut, motif, CO2eq_kg) %>%
+      select(agent, statut, motif, CO2eq_kg, type_terrain) %>%
       group_by(agent)%>%
       mutate(total = sum(CO2eq_kg)) %>%
       arrange(agent) %>%
@@ -536,9 +519,12 @@ server <- function(input, output, session) {
       mutate(missions_longues = missions_longues + inconnu*p_longues) %>%
       select(-inconnu)
     
-    z <- merge(y, df_type_terrain_agents, by.x=1, by.y = 1, all = T)
-    
-     return(z)
+    return(y)
+    # ### ancienne version avec calcul auto des terrains eloignes
+    # z <- merge(y, df_type_terrain_agents, by.x=1, by.y = 1, all = T)
+    # 
+    # 
+    #  return(z)
   })
   
   
@@ -548,7 +534,7 @@ server <- function(input, output, session) {
     ### mesure : quota perm, colloques
     quota_perm_coll <- input$mes_perm_coll * 3000
     
-  df_1 <- df_agent() %>%
+  previous_df <- df_agent() %>%
       dplyr::mutate(colloques = case_when(
         statut == "permanents" & colloques > quota_perm_coll ~ quota_perm_coll,
         TRUE ~ colloques)) %>%
@@ -557,9 +543,7 @@ server <- function(input, output, session) {
     
     ### mesure : quota ext, colloques
     quota_ext_coll <- input$mes_ext_coll * 3000
-    previous_df <- df_1
-
-    df_2 <- previous_df %>%
+    previous_df <- previous_df %>%
       dplyr::mutate(colloques = case_when(
         statut == "externes" & colloques > quota_ext_coll ~ quota_ext_coll,
         TRUE ~ colloques)) %>%
@@ -568,9 +552,7 @@ server <- function(input, output, session) {
 
     ### mesure : quota personnels, colloques
     quota_pers_coll <- input$mes_pers_coll * 3000
-    previous_df <- df_2
-
-    df_3 <- previous_df %>%
+    previous_df <- previous_df %>%
       dplyr::mutate(colloques = case_when(
         statut != "externes" & colloques > quota_pers_coll ~ quota_pers_coll,
         TRUE ~ colloques)) %>%
@@ -579,58 +561,80 @@ server <- function(input, output, session) {
 
     ### mesure : quota docspostdocs, colloques
     quota_docspostdocs_coll <- input$mes_docspostdocs_coll * 3000
-    previous_df <- df_3
-
-    df_4 <- previous_df %>%
+    previous_df <- previous_df %>%
       dplyr::mutate(colloques = case_when(
         statut == "doc_postdoc" & colloques > quota_docspostdocs_coll ~ quota_docspostdocs_coll,
         TRUE ~ colloques)) %>%
-      dplyr::mutate(total_quota = colloques + etude_terrain + autres)%>%
+      dplyr::mutate(total_quota = colloques + etude_terrain + autres) %>%
       dplyr::mutate(total = total_quota + missions_longues)
 
-    ### mesure : quota perm, tout
-    quota_perm_all <- input$mes_perm_all * 3000
-    previous_df <- df_4
-
-    df_5 <- previous_df %>%
-      dplyr::select(-c("colloques","autres","etude_terrain")) %>%
+    
+    
+    ### AVANT DE PASSER AU "tous motifs", nécessaire de simplifier le tableau
+    previous_df <- previous_df %>%
+      dplyr::select(-c("colloques","autres","etude_terrain"))
+    
+    
+    
+    ### mesure : quota perm, tout far
+    quota_perm_all_far <- input$mes_perm_all_far * 3000
+    previous_df <- previous_df %>%
       dplyr::mutate(total_quota = case_when(
-        statut == "permanents" & total_quota >  quota_perm_all ~  quota_perm_all,
+        statut == "permanents" & type_terrain == "far" & total_quota >  quota_perm_all_far ~  quota_perm_all_far,
         TRUE ~ total_quota))%>%
       dplyr::mutate(total = total_quota + missions_longues)
 
+    ### mesure : quota perm, tout close
+    quota_perm_all_close <- input$mes_perm_all_close * 3000
+    previous_df <- previous_df %>%
+    dplyr::mutate(total_quota = case_when(
+        statut == "permanents" & type_terrain == "close" & total_quota >  quota_perm_all_close ~  quota_perm_all_close,
+        TRUE ~ total_quota))%>%
+      dplyr::mutate(total = total_quota + missions_longues)
+
+
 ### mesure : quota ext, tout
 quota_ext_all <- input$mes_ext_all * 3000
-previous_df <- df_5
-
-df_6 <- previous_df %>%
+previous_df <- previous_df %>%
   dplyr::mutate(total_quota = case_when(
     statut == "externes" & total_quota >  quota_ext_all ~  quota_ext_all,
     TRUE ~ total_quota))%>%
   dplyr::mutate(total = total_quota + missions_longues)
 
-    ### mesure : quota docspostdocs, tout
-    quota_docspostdocs_all <- input$mes_docspostdocs_all * 3000
-    previous_df <- df_6
-
-    df_7 <- previous_df %>%
+    ### mesure : quota docspostdocs, tout far
+    quota_docspostdocs_all_far <- input$mes_docspostdocs_all_far * 3000
+    previous_df <- previous_df %>%
       dplyr::mutate(total_quota = case_when(
-        statut == "doc_postdoc" & total_quota >  quota_docspostdocs_all ~  quota_docspostdocs_all,
+        statut == "doc_postdoc"& type_terrain == "far" & total_quota >  quota_docspostdocs_all_far ~  quota_docspostdocs_all_far,
         TRUE ~ total_quota))%>%
       dplyr::mutate(total = total_quota + missions_longues)
 
-    ### mesure : quota personnels, tout
-    quota_pers_all <- input$mes_pers_all * 3000
-    previous_df <- df_7
-
-    df_8 <- previous_df %>%
+    ### mesure : quota docspostdocs, tout close
+    quota_docspostdocs_all_close <- input$mes_docspostdocs_all_close * 3000
+    previous_df <- previous_df %>%
       dplyr::mutate(total_quota = case_when(
-        statut != "externes" & total_quota > quota_pers_all ~ quota_pers_all,
+        statut == "doc_postdoc" & type_terrain == "close" & total_quota >  quota_docspostdocs_all_close ~  quota_docspostdocs_all_close,
+        TRUE ~ total_quota))%>%
+      dplyr::mutate(total = total_quota + missions_longues)
+    
+    
+    ### mesure : quota personnels, tout far
+    quota_pers_all_far <- input$mes_pers_all_far * 3000
+    previous_df <- previous_df %>%
+      dplyr::mutate(total_quota = case_when(
+        statut != "externes"& type_terrain == "far" & total_quota > quota_pers_all_far ~ quota_pers_all_far,
         TRUE ~ total_quota)) %>%
     dplyr::mutate(total = total_quota + missions_longues)
 
+    ### mesure : quota personnels, tout close
+    quota_pers_all_close <- input$mes_pers_all_close * 3000
+    previous_df <- previous_df %>%
+      dplyr::mutate(total_quota = case_when(
+        statut != "externes" & type_terrain == "close" & total_quota > quota_pers_all_close ~ quota_pers_all_close,
+        TRUE ~ total_quota)) %>%
+      dplyr::mutate(total = total_quota + missions_longues)
 
-    return(df_8)
+    return(previous_df)
     
   })
 
@@ -662,16 +666,19 @@ df_6 <- previous_df %>%
   
   
   output$text_quotas <- renderUI({
-    str1 <- ifelse(input$mes_pers_all==quota_max, "", paste("Quota personnels, tous motifs :", input$mes_pers_all, "t/an"))
+    str1 <- ifelse(input$mes_pers_all_far==quota_max, "", paste("Quota personnels avec rech. hors Europe, tous motifs :", input$mes_pers_all_far, "t/an"))
     str2 <- ifelse(input$mes_ext_all==quota_max, "", paste("Quota externes, tous motifs :", input$mes_ext_all, "t/an"))
-    str3 <- ifelse(input$mes_perm_all==quota_max, "", paste("Quota permanents, tous motifs :", input$mes_perm_all, "t/an"))
-    str4 <- ifelse(input$mes_docspostdocs_all==quota_max, "", paste("Quota docspostdocs, tous motifs :", input$mes_docspostdocs_all, "t/an"))
+    str3 <- ifelse(input$mes_perm_all_far==quota_max, "", paste("Quota permanents avec rech. hors Europe, tous motifs :", input$mes_perm_all_far, "t/an"))
+    str4 <- ifelse(input$mes_docspostdocs_all_far==quota_max, "", paste("Quota docspostdocs avec rech. hors Europe, tous motifs :", input$mes_docspostdocs_all_far, "t/an"))
     str5 <- ifelse(input$mes_pers_coll==quota_max, "", paste("Quota personnels, colloques :", input$mes_pers_coll, "t/an"))
     str6 <- ifelse(input$mes_ext_coll==quota_max, "", paste("Quota externes, colloques :", input$mes_ext_coll, "t/an"))
     str7 <- ifelse(input$mes_perm_coll==quota_max, "", paste("Quota permanents, colloques :", input$mes_perm_coll, "t/an"))
     str8 <- ifelse(input$mes_docspostdocs_coll==quota_max, "", paste("Quota docspostdocs, colloques :", input$mes_docspostdocs_coll, "t/an"))
+    str1bis <- ifelse(input$mes_pers_all_close==quota_max, "", paste("Quota personnels sans rech. hors Europe, tous motifs :", input$mes_pers_all_close, "t/an"))
+    str3bis <- ifelse(input$mes_perm_all_close==quota_max, "", paste("Quota permanents sans rech. hors Europe, tous motifs :", input$mes_perm_all_close, "t/an"))
+    str4bis <- ifelse(input$mes_docspostdocs_all_close==quota_max, "", paste("Quota docspostdocs sans rech. hors Europe, tous motifs :", input$mes_docspostdocs_all_close, "t/an"))
     
-    markdown(paste(str1, str2,str3,str4,str5,str6,str7,str8, sep = '\n\n'))
+    markdown(paste(str1bis, str1, str3bis,str3,str4bis,str4,str2,str5,str6,str7,str8, sep = '\n\n'))
   })
   
   
@@ -789,44 +796,43 @@ df_6 <- previous_df %>%
   )
   
   
-# adapter les quotas plus finement
- 
-  
-  pourcentage_field_international <- reactive({
-    df_missions %>%
-      dplyr::mutate(across(where(is.numeric), \(x) round(x, 2)))
-    
-    
-    df_missions_noext <-  df_missions %>%
-      select(agent, statut, motif, destination, CO2eq_kg) %>%
-      filter(motif== "etude_terrain") %>%
-      filter(statut != "externes")
-    
-    df_missions_noext_international <-  df_missions %>%
-      select(agent, statut, motif, destination, CO2eq_kg) %>%
-      filter(motif== "etude_terrain") %>%
-      filter(statut != "externes")  %>%
-      filter(destination %in% c("Afrique", "Asie", "Amériques", "Proche-Orient"))
-    
-    num_agent_international <- nrow(table(df_missions_noext_international$agent, df_missions_noext_international$destination))
-    num_agent_all <- nrow(table(df_missions_noext$agent, df_missions_noext$destination))
-    
-    num_agent_international/num_agent_all
-  })
-  
-  output$text_p_field_international <- renderText(paste0("Pourcentage d'agents (hors externes) avec des missions de terrain/étude hors Europe : ", round(pourcentage_field_international() * 100, 1)," %"))
-  
-  output$text_multi <- renderText(ifelse(input$ajust1 == 1, "", paste("Multiplicateur terrains hors EU : x", input$ajust1)))
-  
-  output$text_quota4_general <- renderText(paste0("Quota permanents non ajusté (permanents, tous motifs) : ", input$mes_perm_all," t eCO2 par an"))
-  output$text_quota4_intern <- renderText(paste0("Quota permanents ajusté SANS terrain hors Europe (permanents, tous motifs) : ", input$mes_perm_all * (1/ (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1))," t eCO2 par an"))
-  output$text_quota4_nointern <- renderText(paste0("Quota permanents ajusté AVEC terrain hors Europe (permanents, tous motifs) : ", input$mes_perm_all * input$ajust1 / (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1)," t eCO2 par an"))
-  output$text_quota6_general <- renderText(paste0("Quota général non ajusté (tous personnels, tous motifs) : ", input$mes_pers_all," t eCO2 par an"))
-  output$text_quota6_intern <- renderText(paste0("Quota général ajusté SANS terrain hors Europe (tous personnels, tous motifs) : ", input$mes_pers_all * (1/ (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1))," t eCO2 par an"))
-  output$text_quota6_nointern <- renderText(paste0("Quota général ajusté AVEC terrain hors Europe (tous personnels, tous motifs) : ", input$mes_pers_all * input$ajust1 / (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1)," t eCO2 par an"))
-  
+# # adapter les quotas plus finement avec multiplicateur = n'est plus utilisé
+#  
+#   pourcentage_field_international <- reactive({
+#     df_missions %>%
+#       dplyr::mutate(across(where(is.numeric), \(x) round(x, 2)))
+#     
+#     
+#     df_missions_noext <-  df_missions %>%
+#       select(agent, statut, motif, destination, CO2eq_kg) %>%
+#       filter(motif== "etude_terrain") %>%
+#       filter(statut != "externes")
+#     
+#     df_missions_noext_international <-  df_missions %>%
+#       select(agent, statut, motif, destination, CO2eq_kg) %>%
+#       filter(motif== "etude_terrain") %>%
+#       filter(statut != "externes")  %>%
+#       filter(destination %in% c("Afrique", "Asie", "Amériques", "Proche-Orient"))
+#     
+#     num_agent_international <- nrow(table(df_missions_noext_international$agent, df_missions_noext_international$destination))
+#     num_agent_all <- nrow(table(df_missions_noext$agent, df_missions_noext$destination))
+#     
+#     num_agent_international/num_agent_all
+#   })
+#   
+#   output$text_p_field_international <- renderText(paste0("Pourcentage d'agents (hors externes) avec des missions de terrain/étude hors Europe : ", round(pourcentage_field_international() * 100, 1)," %"))
+#   
+#   output$text_multi <- renderText(ifelse(input$ajust1 == 1, "", paste("Multiplicateur terrains hors EU : x", input$ajust1)))
+#   
+#   output$text_quota4_general <- renderText(paste0("Quota permanents non ajusté (permanents, tous motifs) : ", input$mes_perm_all," t eCO2 par an"))
+#   output$text_quota4_intern <- renderText(paste0("Quota permanents ajusté SANS terrain hors Europe (permanents, tous motifs) : ", input$mes_perm_all * (1/ (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1))," t eCO2 par an"))
+#   output$text_quota4_nointern <- renderText(paste0("Quota permanents ajusté AVEC terrain hors Europe (permanents, tous motifs) : ", input$mes_perm_all * input$ajust1 / (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1)," t eCO2 par an"))
+#   output$text_quota6_general <- renderText(paste0("Quota général non ajusté (tous personnels, tous motifs) : ", input$mes_pers_all," t eCO2 par an"))
+#   output$text_quota6_intern <- renderText(paste0("Quota général ajusté SANS terrain hors Europe (tous personnels, tous motifs) : ", input$mes_pers_all * (1/ (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1))," t eCO2 par an"))
+#   output$text_quota6_nointern <- renderText(paste0("Quota général ajusté AVEC terrain hors Europe (tous personnels, tous motifs) : ", input$mes_pers_all * input$ajust1 / (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1)," t eCO2 par an"))
+#   
 
-  #histo par agent
+  #histo repartition emissions par agent = le plus important
   
   dfplot_agent_all <-  reactive({
     x <- df_agent() %>% arrange(total)
@@ -890,21 +896,7 @@ df_6 <- previous_df %>%
       labs(x = "Agents (docs & postdocs)", y = "Emissions missions (t eqCO2 / an)", fill = "mesures")
   )
 
-  
 
-  
-  
-  
-  ############### !!! corriger nombre ci-dessous ! #######################
-  output$diff_avant_apres <- renderPlot(
-    
-    ggplot(data_plot(), aes(x = Agent_moyen, y = CO2/1000/145)) + geom_col() +
-      labs(x = "Agent moyen", y = "Emission en tonne de CO2") 
-    # hum le 145 n'est plus bon si tu as modif les jeux de données !
-    
-  )
-  
- 
   
 }
 
