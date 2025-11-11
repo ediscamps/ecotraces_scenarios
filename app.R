@@ -158,9 +158,21 @@ ui_tab3 <- fluidPage(
   
   # Show a plot of the generated distribution
   br(),br(),
-  h5(strong("Impact de la réduction selon le statut de l'agent :")),
+  h5(strong("Impact de la réduction sur les BGES par statut :")),
   tags$br(),
   plotOutput("histo_quota"),
+  h5(strong("Répartition des émissions par agent (tou.tes) :")),
+  tags$br(),
+  plotOutput("histo_agent_all"),
+  h5(strong("Répartition des émissions par agent (permanents) :")),
+  tags$br(),
+  plotOutput("histo_agent_perm"),
+  
+  h5(strong("Répartition des émissions par agent (docs & postdocs) :")),
+  tags$br(),  
+  plotOutput("histo_agent_docspostdocs"),
+
+
   # plotOutput("histo_quota_motif"),
   tags$br(),
   # # DT::dataTableOutput("dt"),
@@ -468,6 +480,25 @@ server <- function(input, output, session) {
   
   df_agent <- reactive({
   
+    # identification des agents avec terrains éloignés
+    df_type_terrain_agents <-  df_missions %>%
+      select(agent, statut, motif, destination) %>%
+      filter(motif== "etude_terrain") %>%
+      group_by(agent) %>%
+      arrange(agent) %>%
+      mutate(type_terrain = case_when(
+        destination %in% c("Afrique", "Asie", "Amériques", "Proche-Orient") ~  "eloigne",
+        TRUE ~ "no_eloigne"))    %>%
+      select(agent, type_terrain) %>%
+      group_by(agent, type_terrain) %>%
+      tally() %>%
+      spread(type_terrain, n) %>%
+      mutate(type_terrain = case_when(
+        eloigne>0 ~  "eloigne",
+        TRUE ~ "no_eloigne")) %>%
+      select(agent, type_terrain)
+    
+    
   
             # les missions longues sont ecartees ici
     df <- df_missions_reduc() %>%
@@ -505,7 +536,9 @@ server <- function(input, output, session) {
       mutate(missions_longues = missions_longues + inconnu*p_longues) %>%
       select(-inconnu)
     
-     return(y)
+    z <- merge(y, df_type_terrain_agents, by.x=1, by.y = 1, all = T)
+    
+     return(z)
   })
   
   
@@ -792,7 +825,73 @@ df_6 <- previous_df %>%
   output$text_quota6_intern <- renderText(paste0("Quota général ajusté SANS terrain hors Europe (tous personnels, tous motifs) : ", input$mes_pers_all * (1/ (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1))," t eCO2 par an"))
   output$text_quota6_nointern <- renderText(paste0("Quota général ajusté AVEC terrain hors Europe (tous personnels, tous motifs) : ", input$mes_pers_all * input$ajust1 / (pourcentage_field_international()*input$ajust1 - pourcentage_field_international() + 1)," t eCO2 par an"))
   
+
+  #histo par agent
   
+  dfplot_agent_all <-  reactive({
+    x <- df_agent() %>% arrange(total)
+    x <- cbind(x, n_agent = seq(1, length(x$agent), 1))
+    x <- x %>% mutate(mesures = "avant") %>% select(n_agent, total, mesures)
+    
+    y <- df_agent_reduc() %>% arrange(total)
+    y <- cbind(y, n_agent = seq(1, length(y$agent), 1))
+    y <- y %>% mutate(mesures = "après") %>% select(n_agent, total, mesures)
+    
+    df_compare <- rbind(x, y)
+    
+    return(df_compare)
+  })
+  
+  dfplot_agent_perm <-  reactive({
+    x <- df_agent() %>% arrange(total) %>% filter(statut == "permanents")
+    x <- cbind(x, n_agent = seq(1, length(x$agent), 1))
+    x <- x %>% mutate(mesures = "avant") %>% select(n_agent, total, mesures)
+    
+    y <- df_agent_reduc() %>% arrange(total) %>% filter(statut == "permanents")
+    y <- cbind(y, n_agent = seq(1, length(y$agent), 1))
+    y <- y %>% mutate(mesures = "après") %>% select(n_agent, total, mesures)
+    
+    df_compare <- rbind(x, y)
+    
+    return(df_compare)
+  })
+  
+  dfplot_agent_docspostdocs <-  reactive({
+    x <- df_agent() %>% arrange(total) %>% filter(statut == "doc_postdoc")
+    x <- cbind(x, n_agent = seq(1, length(x$agent), 1))
+    x <- x %>% mutate(mesures = "avant") %>% select(n_agent, total, mesures)
+    
+    y <- df_agent_reduc() %>% arrange(total) %>% filter(statut == "doc_postdoc")
+    y <- cbind(y, n_agent = seq(1, length(y$agent), 1))
+    y <- y %>% mutate(mesures = "après") %>% select(n_agent, total, mesures)
+    
+    df_compare <- rbind(x, y)
+    
+    return(df_compare)
+  })
+  
+  output$histo_agent_all <- renderPlot(
+    ggplot(dfplot_agent_all(), aes(n_agent, total/3000, fill= factor(mesures, c("avant","après"))))+
+      geom_col(position = position_identity())+
+      scale_fill_manual(values = c("grey", "black")) +
+      labs(x = "Agents (tous statuts)", y = "Emissions missions (t eqCO2 / an)", fill = "mesures")
+  )
+  
+  output$histo_agent_perm <- renderPlot(
+    ggplot(dfplot_agent_perm(), aes(n_agent, total/3000, fill= factor(mesures, c("avant","après"))))+
+      geom_col(position = position_identity())+
+      scale_fill_manual(values = c("grey", "black")) +
+      labs(x = "Agents (permanents)", y = "Emissions missions (t eqCO2 / an)", fill = "mesures")
+  )
+  output$histo_agent_docspostdocs <- renderPlot(
+    ggplot(dfplot_agent_docspostdocs(), aes(n_agent, total/3000, fill= factor(mesures, c("avant","après"))))+
+      geom_col(position = position_identity())+
+      scale_fill_manual(values = c("grey", "black")) +
+      labs(x = "Agents (docs & postdocs)", y = "Emissions missions (t eqCO2 / an)", fill = "mesures")
+  )
+
+  
+
   
   
   
