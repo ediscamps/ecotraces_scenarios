@@ -835,13 +835,24 @@ previous_df <- previous_df %>%
   #histo repartition emissions par agent = le plus important
   
   dfplot_agent_all <-  reactive({
-    x <- df_agent() %>% arrange(total)
-    x <- cbind(x, n_agent = seq(1, length(x$agent), 1))
-    x <- x %>% mutate(mesures = "avant") %>% select(n_agent, total, mesures)
     
-    y <- df_agent_reduc() %>% arrange(total)
-    y <- cbind(y, n_agent = seq(1, length(y$agent), 1))
-    y <- y %>% mutate(mesures = "après") %>% select(n_agent, total, mesures)
+    
+    x <- df_agent() %>% 
+      arrange(total)%>% 
+      mutate(mesures = "avant") %>% 
+      select(agent, total, mesures)
+    
+    x <- cbind(x, n_agent = seq(1, length(x$agent), 1))
+    
+    num_agent <- x %>%
+      select(agent, n_agent)
+    
+    y <- df_agent_reduc() %>% 
+      arrange(total)%>% 
+      mutate(mesures = "après") %>% 
+      select(agent, total, mesures) %>%
+      merge(num_agent,y, by.x = "agent", by.y = "agent") %>%
+      select(agent, n_agent, total, mesures)
     
     df_compare <- rbind(x, y)
     
@@ -849,30 +860,50 @@ previous_df <- previous_df %>%
   })
   
   dfplot_agent_perm <-  reactive({
-    x <- df_agent() %>% arrange(total) %>% filter(statut == "permanents")
-    x <- cbind(x, n_agent = seq(1, length(x$agent), 1))
-    x <- x %>% mutate(mesures = "avant") %>% select(n_agent, total, mesures)
+    x <- df_agent() %>% 
+      filter(statut == "permanents") %>% 
+      arrange(total)%>% 
+      mutate(mesures = "avant") %>% 
+      select(agent, total, mesures)
     
-    y <- df_agent_reduc() %>% arrange(total) %>% filter(statut == "permanents")
-    y <- cbind(y, n_agent = seq(1, length(y$agent), 1))
-    y <- y %>% mutate(mesures = "après") %>% select(n_agent, total, mesures)
+    x <- cbind(x, n_agent = seq(1, length(x$agent), 1))
+    
+    num_agent <- x %>%
+      select(agent, n_agent)
+    
+    y <- df_agent_reduc() %>% 
+      filter(statut == "permanents") %>% 
+      arrange(total)%>% 
+      mutate(mesures = "après") %>% 
+      select(agent, total, mesures) %>%
+      merge(num_agent,y, by.x = "agent", by.y = "agent") %>%
+      select(agent, n_agent, total, mesures)
     
     df_compare <- rbind(x, y)
-    
     return(df_compare)
   })
   
   dfplot_agent_docspostdocs <-  reactive({
-    x <- df_agent() %>% arrange(total) %>% filter(statut == "doc_postdoc")
-    x <- cbind(x, n_agent = seq(1, length(x$agent), 1))
-    x <- x %>% mutate(mesures = "avant") %>% select(n_agent, total, mesures)
+     x <- df_agent() %>% 
+      filter(statut == "doc_postdoc") %>% 
+      arrange(total)%>% 
+      mutate(mesures = "avant") %>% 
+      select(agent, total, mesures)
     
-    y <- df_agent_reduc() %>% arrange(total) %>% filter(statut == "doc_postdoc")
-    y <- cbind(y, n_agent = seq(1, length(y$agent), 1))
-    y <- y %>% mutate(mesures = "après") %>% select(n_agent, total, mesures)
+    x <- cbind(x, n_agent = seq(1, length(x$agent), 1))
+    
+    num_agent <- x %>%
+      select(agent, n_agent)
+    
+    y <- df_agent_reduc() %>% 
+      filter(statut == "doc_postdoc") %>% 
+      arrange(total)%>% 
+      mutate(mesures = "après") %>% 
+      select(agent, total, mesures) %>%
+      merge(num_agent,y, by.x = "agent", by.y = "agent") %>%
+      select(agent, n_agent, total, mesures)
     
     df_compare <- rbind(x, y)
-    
     return(df_compare)
   })
   
